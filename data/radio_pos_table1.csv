@@ -1,0 +1,20 @@
+Table 5 
+J2000 Radio Positions of Betelgeuse
+
+
+Epoch Julian Year	R.A. (J2000)	Error (mas)	Decl. (J2000)	Error (mas)	Reference	
+2004.829	05 55 10.31227	2.5	07 24 25.4615	3.3	AH0824: Q, K, U, X, C, L	
+2004.805	05 55 10.31225	2.0	07 24 25.4616	4.8	AH0824: Q, K, U, X, C, L	
+2003.609	05 55 10.31045	4.1	07 24 25.4574	2.4	AH0824: Q, K, U, X, C, L	
+2003.4356	05 55 10.3097	5	07 24 25.461	12	AF0399: X, Boboltz et al. (2007)	
+2002.280	05 55 10.30752	1.8	07 24 25.4383	4.9	AH0778: K, U, X, C, L	
+2002.132	05 55 10.30725	1.7	07 24 25.4362	3.1	AH0778: K, U, X, C, L	
+2000.991	05 55 10.30519	1.2	07 24 25.4193	1.3	AL0525: Q, K	
+2000.943	05 55 10.3061	13	07 24 25.432	26	AF0376: X, Boboltz et al. (2003)	
+1998.241	05 55 10.30147	3.1	07 24 25.4014	5.7	AL0436: Q, K	
+1996.971	05 55 10.29911	8.9	07 24 25.3983	5.9	AL0398: Q, K, U, X	
+1987.655	05 55 10.28378	15	07 24 25.2867	15	AB0446: U	
+1982.4261	05 55 10.27623	30	07 24 25.2663	30	C, Johnston et al. (2003)	
+1982.4181	05 55 10.27564	30	07 24 25.2293	30	C, Johnston et al. (2003)	
+Notes.
+The VLA program numbers are given for the new positions. The R.A. and decl. include guard figures. These positions were used to derive astrometric solution No. 4, while solution 3 includes our X-band data and thus the relevant epochs have slightly different positions and errors.
