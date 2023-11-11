@@ -104,4 +104,4 @@ plt.errorbar(
 )
 plt.xlabel("RA [mas]")
 plt.ylabel("decl. [mas]")
-plt.savefig("radio_data.png", dpi=250)
+plt.savefig("../plots/radio_data.png", dpi=250)
