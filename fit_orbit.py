@@ -50,9 +50,9 @@ beetle_system.sys_priors[m0_index] = priors.UniformPrior(
 m1_index = beetle_system.param_idx["m1"]
 beetle_system.sys_priors[m1_index] = priors.LogUniformPrior(0.1, 10)
 
-# set period prior between 1 and 10 years
+# set period prior between 3 and 10 years
 p1_index = beetle_system.param_idx["per1"]
-beetle_system.sys_priors[p1_index] = priors.UniformPrior(1, 10)
+beetle_system.sys_priors[p1_index] = priors.UniformPrior(3, 10)
 
 
 """
