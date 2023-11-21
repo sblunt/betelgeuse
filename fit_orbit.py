@@ -1,19 +1,29 @@
 import os.path
 from orbitize import read_input, hipparcos, system, priors, sampler
-
+import numpy as np
 
 """
-Set some options for the fit
+Questions/todos:
+# TODO: incorporate Hipparcos jitter into actual fit?
+# TODO: think about what else might be going wrong.
 """
 
 fit_planet = False  # if True, fit for planet parameters
+radio_var = 2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio positions
+hip_dvd = True
 
 input_file = os.path.join("data/data.csv")
 data_table = read_input.read_file(input_file)
 
+data_table["quant1_err"] = np.sqrt(data_table["quant1_err"] ** 2 + radio_var)
+data_table["quant2_err"] = np.sqrt(data_table["quant2_err"] ** 2 + radio_var)
+
 num_secondary_bodies = 1  # number of planets/companions orbiting your primary
 hip_num = "027989"  # Betelgeuse
-IAD_file = "data/H{}.d".format(hip_num)
+if hip_dvd:
+    IAD_file = "data/HIP{}_dvd.d".format(hip_num)
+else:
+    IAD_file = "data/H{}.d".format(hip_num)
 
 # the angular size of Beetle is 55 mas, and the Hipparcos jitter is 0.15 mas, for reference
 
@@ -93,12 +103,12 @@ print(list(zip(beetle_system.labels, beetle_system.sys_priors)))
 """
 Run MCMC
 """
-num_threads = 10  # 50
-num_temps = 5  # 20
-num_walkers = 10  # 1000
-n_steps_per_walker = 1_000  # 10_000
+num_threads = 150  # 50
+num_temps = 20  # 20
+num_walkers = 100  # 1000
+n_steps_per_walker = 10  # 10_000
 num_steps = num_walkers * n_steps_per_walker
-burn_steps = 1_000  # 10_000
+burn_steps = 100  # 10_000
 thin = 1  # 100
 
 
@@ -109,3 +119,6 @@ beetle_sampler = sampler.MCMC(
     num_walkers=num_walkers,
 )
 beetle_sampler.run_sampler(num_steps, burn_steps=burn_steps, thin=thin)
+beetle_sampler.results.save_results(
+    "results/planet{}_burn{}_total{}.hdf5".format(fit_planet, burn_steps, num_steps)
+)

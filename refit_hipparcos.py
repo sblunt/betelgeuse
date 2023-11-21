@@ -2,18 +2,32 @@ from datetime import datetime
 
 from orbitize.hipparcos import nielsen_iad_refitting_test
 
+"""
+It wasn't immediately clear to me how the van Leeuwen+ team described stochastic fits.
+I tried refitting by adding the var term in quadrature and subtracting it in quadrature,
+but both of those looked incorrect for the DVD refit. Not incorporating the var
+term into the refit in any way worked, so my interpretation is that the van 
+Leeuwen team doesn't actually incorporate the var term into the fit; it's just
+a "leftover" error term to indicate that the fit is not great.
+"""
+
+use_dvd = True
+if use_dvd:
+    saveplot_append = "_dvd"
+else:
+    saveplot_append = ""
+
 hip_num = "027989"  # Betelgeuse
 
 # Name/path for the plot this function will make
-saveplot = "plots/betelgeuse_IADrefit.png"
+saveplot = "plots/betelgeuse_IADrefit{}.png".format(saveplot_append)
 
 # Location of the Hipparcos IAD file.
-IAD_file = "/data/user/sblunt/HipIAD-2021/ResRec_JavaTool_2014/H{}/H{}.d".format(
-    hip_num[0:3], hip_num
-)
+if use_dvd:
+    IAD_file = "data/HIP027989_dvd.d"
+else:
+    IAD_file = "data/H027989.d"
 
-# These `emcee` settings are sufficient for the 5-parameter fits we're about to run,
-#   although I'd probably run it for 5,000-10,000 steps if I wanted to publish it.
 burn_steps = 100
 mcmc_steps = 5000
 
