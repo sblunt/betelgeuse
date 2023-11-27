@@ -3,20 +3,28 @@ from orbitize import read_input, hipparcos, system, priors, sampler
 import numpy as np
 
 """
+Note: in Harper+ 2017 fit, I believe they assume the same cosmic jitter for the
+Hipparcos data as Hipparcos does.
+
 Questions/todos:
-# TODO: incorporate Hipparcos jitter into actual fit?
 # TODO: think about what else might be going wrong.
 """
 
 fit_planet = False  # if True, fit for planet parameters
-radio_var = 2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio positions
+radio_jit = 2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio positions
 hip_dvd = True
+normalizie_hip_errs = True
+
+fit_name = "planet{}_dvd{}_renormHIP{}".format(fit_planet, hip_dvd, normalizie_hip_errs)
 
 input_file = os.path.join("data/data.csv")
 data_table = read_input.read_file(input_file)
 
-data_table["quant1_err"] = np.sqrt(data_table["quant1_err"] ** 2 + radio_var)
-data_table["quant2_err"] = np.sqrt(data_table["quant2_err"] ** 2 + radio_var)
+data_table["quant1_err"] = np.sqrt(data_table["quant1_err"] ** 2 + radio_jit**2)
+data_table["quant2_err"] = np.sqrt(data_table["quant2_err"] ** 2 + radio_jit**2)
+
+# TODO: should radio jitter be added to both table 1 and table 2 data? Also should it be added in sqrt or something?
+# TODO next: reproduce just radio?
 
 num_secondary_bodies = 1  # number of planets/companions orbiting your primary
 hip_num = "027989"  # Betelgeuse
@@ -27,7 +35,9 @@ else:
 
 # the angular size of Beetle is 55 mas, and the Hipparcos jitter is 0.15 mas, for reference
 
-beetle_Hip = hipparcos.HipparcosLogProb(IAD_file, hip_num, num_secondary_bodies)
+beetle_Hip = hipparcos.HipparcosLogProb(
+    IAD_file, hip_num, num_secondary_bodies, renormalize_errors=normalizie_hip_errs
+)
 
 # we'll overwrite these in a sec
 m0 = 1e-10  # median mass of primary [M_sol]
@@ -111,14 +121,16 @@ num_steps = num_walkers * n_steps_per_walker
 burn_steps = 100  # 10_000
 thin = 1  # 100
 
-
 beetle_sampler = sampler.MCMC(
     beetle_system,
     num_threads=num_threads,
     num_temps=num_temps,
     num_walkers=num_walkers,
 )
+
+assert beetle_sampler.system.hipparcos_IAD.renormalize_errors
+
 beetle_sampler.run_sampler(num_steps, burn_steps=burn_steps, thin=thin)
 beetle_sampler.results.save_results(
-    "results/planet{}_burn{}_total{}.hdf5".format(fit_planet, burn_steps, num_steps)
+    "results/{}_burn{}_total{}.hdf5".format(fit_name, burn_steps, num_steps)
 )

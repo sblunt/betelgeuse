@@ -16,8 +16,10 @@ the first one is given in FK5 at equinox J2000. This script:
 - subtracts the reported Hipparcos position from the radio positions. This is the
   format orbitize! expects.
 
-Note: this file uses the new (2014) Hipparcos reduction to subtract, but the
-values (except var) are all the same as the DVD values, so it doesn't matter.
+  TODO: I think J2000 actually refers to ICRS, so I changed that. Update documentation if true.
+
+Note: this file uses the new (2014) Hipparcos reduction value to subtract, but the
+derived values (except var) are all the same as the DVD values, so it doesn't matter.
 """
 
 
@@ -64,9 +66,8 @@ table2["raoff_err"] = table2["error"]
 table2["decoff_err"] = table2["error"]
 
 df = pd.concat([table1, table2], ignore_index=True)
+
 n_obs = len(df)
-n_obs1 = len(table1)
-n_obs2 = len(table2)
 
 df_orbitize = DataFrame(
     Time(df["date"].astype("float"), format="decimalyear").mjd, columns=["epoch"]
@@ -75,59 +76,35 @@ df_orbitize["object"] = np.zeros_like(df_orbitize["epoch"]).astype(int)
 df_orbitize["raoff"] = np.ones_like(df_orbitize["epoch"])
 df_orbitize["decoff"] = np.ones_like(df_orbitize["epoch"])
 
-for i in range(n_obs1):
-    coord = SkyCoord(
-        "{} {} {} {} {} {}".format(
-            table1["ra_hr"][i],
-            table1["ra_min"][i],
-            table1["ra_sec"][i],
-            table1["dec_deg"][i],
-            table1["dec_arcmin"][i],
-            table1["dec_arcsec"][i],
-        ),
-        unit=(u.hourangle, u.deg),
-        frame=FK5,
-        equinox="J2000.0",
-    )
-    coord = coord.transform_to(ICRS)
-    ra = coord.ra.deg
-    dec = coord.dec.deg
-    df_orbitize["raoff"][i] = float(ra)  # [deg]
-    df_orbitize["decoff"][i] = float(dec)  # [deg]
-
-for i in range(n_obs2):
-    coord = SkyCoord(
-        "{} {} {} {} {} {}".format(
-            table2["ra_hr"][i],
-            table2["ra_min"][i],
-            table2["ra_sec"][i],
-            table2["dec_deg"][i],
-            table2["dec_arcmin"][i],
-            table2["dec_arcsec"][i],
-        ),
-        unit=(u.hourangle, u.deg),
-        frame=ICRS,
-    )
-    ra = coord.ra.deg
-    dec = coord.dec.deg
-    df_orbitize["raoff"][i + n_obs1] = float(ra)  # [deg]
-    df_orbitize["decoff"][i + n_obs1] = float(dec)  # [deg]
-
-# take difference between reported Hipparcos position and convert to mas
-
 # read the Hipparcos best-fit solution from the IAD file
 astrometric_solution = pd.read_csv("H027989.d", skiprows=9, sep="\s+", nrows=1)
 hipparcos_alpha0 = astrometric_solution["RAdeg"].values[0]  # [deg]
 hipparcos_delta0 = astrometric_solution["DEdeg"].values[0]  # [deg]
+hipparcos_coord = SkyCoord(
+    hipparcos_alpha0, hipparcos_delta0, unit=(u.deg, u.deg), frame=ICRS
+)
 
-df_orbitize["raoff"] = (df_orbitize["raoff"] - hipparcos_alpha0) * u.deg.to(
-    u.mas, equivalencies=u.dimensionless_angles()
-)
-df_orbitize["decoff"] = (df_orbitize["decoff"] - hipparcos_delta0) * u.deg.to(
-    u.mas, equivalencies=u.dimensionless_angles()
-)
+for i in range(n_obs):
+    coord = SkyCoord(
+        "{} {} {} {} {} {}".format(
+            df["ra_hr"][i],
+            df["ra_min"][i],
+            df["ra_sec"][i],
+            df["dec_deg"][i],
+            df["dec_arcmin"][i],
+            df["dec_arcsec"][i],
+        ),
+        unit=(u.hourangle, u.deg),
+        frame=ICRS,
+    )
+
+    # take difference between reported Hipparcos position and convert to mas
+    raoff, deoff = hipparcos_coord.spherical_offsets_to(coord)
+    df_orbitize["raoff"][i] = raoff.to(u.mas).value
+    df_orbitize["decoff"][i] = deoff.to(u.mas).value
+
 df_orbitize["decoff_err"] = df["decoff_err"].astype(float)
-df_orbitize["raoff_err"] = df["decoff_err"].astype(float)
+df_orbitize["raoff_err"] = df["raoff_err"].astype(float)
 
 # save
 df_orbitize.to_csv("data.csv", index=False)
@@ -135,13 +112,14 @@ df_orbitize.to_csv("data.csv", index=False)
 # make a quick plot of the positions
 plt.figure()
 plt.errorbar(
-    df_orbitize["raoff"],
+    df_orbitize["raoff"] * np.cos(np.radians(hipparcos_delta0)),
     df_orbitize["decoff"],
     df_orbitize["raoff_err"],
     df_orbitize["decoff_err"],
     ls="",
     color="rebeccapurple",
 )
-plt.xlabel("RA [mas]")
-plt.ylabel("decl. [mas]")
+plt.xlim(800, -300)
+plt.xlabel("$\Delta\alpha$cos($\delta$) [mas]")
+plt.ylabel("$\Delta\delta$ [mas]")
 plt.savefig("../plots/radio_data.png", dpi=250)

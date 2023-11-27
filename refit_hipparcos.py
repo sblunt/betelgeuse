@@ -9,6 +9,8 @@ but both of those looked incorrect for the DVD refit. Not incorporating the var
 term into the refit in any way worked, so my interpretation is that the van 
 Leeuwen team doesn't actually incorporate the var term into the fit; it's just
 a "leftover" error term to indicate that the fit is not great.
+
+TODO: I don't think this is right: see footnote 8 of van Leeuwen+ 2017. Update documentation here.
 """
 
 use_dvd = True

@@ -5,10 +5,14 @@ import numpy as np
 
 # choose which fit to inspect
 fit_planet = False
+dvd = True
 burn_steps = 100
 total_steps = 1_000
+renorm_hip = True
 
-run_name = "planet{}_burn{}_total{}".format(fit_planet, burn_steps, total_steps)
+run_name = "planet{}_dvd{}_renormHIP{}_burn{}_total{}".format(
+    fit_planet, dvd, renorm_hip, burn_steps, total_steps
+)
 
 
 # read in results
