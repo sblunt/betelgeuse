@@ -6,8 +6,8 @@ import numpy as np
 # choose which fit to inspect
 fit_planet = False
 dvd = True
-burn_steps = 100
-total_steps = 1_000
+burn_steps = 50
+total_steps = 100_000
 renorm_hip = True
 
 run_name = "planet{}_dvd{}_renormHIP{}_burn{}_total{}".format(
@@ -28,6 +28,14 @@ harper17_solution = {
     "pm_ra": [26.42, 0.25],
     "pm_dec": [9.6, 0.12],
 }
+
+# harper17_solution = {  # table 3, 2.4 mas radio noise
+#     "alpha0": [0.09, 0.19],
+#     "delta0": [1.4, 0.48],
+#     "plx": [3.77, 2.20],
+#     "pm_ra": [25.53, 0.31],
+#     "pm_dec": [9.37, 0.28],
+# }
 
 fig, ax = plt.subplots(5, 1, figsize=(8, 11))
 for i, a in enumerate(ax):

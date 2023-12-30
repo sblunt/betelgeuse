@@ -6,8 +6,7 @@ import numpy as np
 Note: in Harper+ 2017 fit, I believe they assume the same cosmic jitter for the
 Hipparcos data as Hipparcos does.
 
-Questions/todos:
-# TODO: think about what else might be going wrong.
+# TODO: clean up documentation for this and other files
 """
 
 fit_planet = False  # if True, fit for planet parameters
@@ -17,14 +16,12 @@ normalizie_hip_errs = True
 
 fit_name = "planet{}_dvd{}_renormHIP{}".format(fit_planet, hip_dvd, normalizie_hip_errs)
 
+
 input_file = os.path.join("data/data.csv")
 data_table = read_input.read_file(input_file)
 
 data_table["quant1_err"] = np.sqrt(data_table["quant1_err"] ** 2 + radio_jit**2)
 data_table["quant2_err"] = np.sqrt(data_table["quant2_err"] ** 2 + radio_jit**2)
-
-# TODO: should radio jitter be added to both table 1 and table 2 data? Also should it be added in sqrt or something?
-# TODO next: reproduce just radio?
 
 num_secondary_bodies = 1  # number of planets/companions orbiting your primary
 hip_num = "027989"  # Betelgeuse
@@ -65,13 +62,14 @@ assert beetle_system.pm_plx_predictor is not None
 
 # make sure orbitize! correctly figures out which epochs are absolute astrometry
 assert len(beetle_system.stellar_astrom_epochs) == 18
+
 """
 Change priors
 """
 
 # set uniform parallax prior
 plx_index = beetle_system.param_idx["plx"]
-beetle_system.sys_priors[plx_index] = priors.UniformPrior(7.6 - 5.0, 7.6 + 5.0)
+beetle_system.sys_priors[plx_index] = priors.UniformPrior(0, 10)
 
 
 m0_index = beetle_system.param_idx["m0"]
@@ -82,6 +80,8 @@ pan1_index = beetle_system.param_idx["pan1"]
 aop1_index = beetle_system.param_idx["aop1"]
 inc1_index = beetle_system.param_idx["inc1"]
 tau1_index = beetle_system.param_idx["tau1"]
+alpha0_index = beetle_system.param_idx["alpha0"]
+delta0_index = beetle_system.param_idx["delta0"]
 
 
 if fit_planet:
@@ -96,6 +96,7 @@ if fit_planet:
     # set period prior between 3 and 10 years
     beetle_system.sys_priors[p1_index] = priors.UniformPrior(3, 10)
 
+
 else:
     # set the planet parameters so that the planet signal is 0 (i.e. only model the astrometry)
     beetle_system.sys_priors[m0_index] = 10
@@ -107,18 +108,22 @@ else:
     beetle_system.sys_priors[inc1_index] = 0
     beetle_system.sys_priors[tau1_index] = 0
 
+    beetle_system.sys_priors[alpha0_index].minval = -20
+    beetle_system.sys_priors[delta0_index].maxval = 20
+
+
 # print out the priors to make sure everything looks fine
 print(list(zip(beetle_system.labels, beetle_system.sys_priors)))
 
 """
 Run MCMC
 """
-num_threads = 150  # 50
+num_threads = 50  # 50
 num_temps = 20  # 20
 num_walkers = 100  # 1000
-n_steps_per_walker = 10  # 10_000
+n_steps_per_walker = 1000  # 10_000
 num_steps = num_walkers * n_steps_per_walker
-burn_steps = 100  # 10_000
+burn_steps = 50  # 10_000
 thin = 1  # 100
 
 beetle_sampler = sampler.MCMC(
