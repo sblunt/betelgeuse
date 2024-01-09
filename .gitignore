@@ -1,3 +1,6 @@
+# Don't version track large results files
+results/*.hdf5
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
