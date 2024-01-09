@@ -6,7 +6,7 @@ import numpy as np
 # choose which fit to inspect
 fit_planet = False
 dvd = True
-burn_steps = 50
+burn_steps = 1_00
 total_steps = 100_000
 renorm_hip = True
 
@@ -21,25 +21,35 @@ beetle_results = (
 )  # create a blank results object to load the data
 beetle_results.load_results("results/{}.hdf5".format(run_name))
 
-harper17_solution = {
-    "alpha0": [0.09, 0.19],
-    "delta0": [1.4, 0.48],
-    "plx": [4.51, 0.8],
-    "pm_ra": [26.42, 0.25],
-    "pm_dec": [9.6, 0.12],
-}
-
-# harper17_solution = {  # table 3, 2.4 mas radio noise
+# harper17_solution = {
 #     "alpha0": [0.09, 0.19],
 #     "delta0": [1.4, 0.48],
-#     "plx": [3.77, 2.20],
-#     "pm_ra": [25.53, 0.31],
-#     "pm_dec": [9.37, 0.28],
+#     "plx": [4.51, 0.8],
+#     "pm_ra": [26.42, 0.25],
+#     "pm_dec": [9.6, 0.12],
 # }
 
-fig, ax = plt.subplots(5, 1, figsize=(8, 11))
+harper17_solution = {  # table 3, 2.4 mas radio noise
+    "alpha0": [0.09, 0.19],
+    "delta0": [1.4, 0.48],
+    "plx": [3.77, 2.20],
+    "pm_ra": [25.53, 0.31],
+    "pm_dec": [9.37, 0.28],
+}
+
+# harper17_solution = {  # table 3, 0 mas radio noise
+#     "alpha0": [0.0, 0.5],
+#     "delta0": [0, 0.5],
+#     "plx": [3.33, 1.93],
+#     "pm_ra": [25.77, 0.28],
+#     "pm_dec": [9.55, 0.24],
+# }
+
+fig, ax = plt.subplots(5, 1, figsize=(5, 11))
 for i, a in enumerate(ax):
     idx = 6 + i
+    param = beetle_results.labels[idx]
+
     a.hist(
         beetle_results.post[:, idx],
         bins=50,
@@ -47,18 +57,34 @@ for i, a in enumerate(ax):
         density=True,
         label="orbitize! refit",
     )
-    param = beetle_results.labels[idx]
+
     a.set_xlabel(param)
-    xs = np.linspace(
-        harper17_solution[param][0] - 5 * harper17_solution[param][1],
-        harper17_solution[param][0] + 5 * harper17_solution[param][1],
-    )
-    a.plot(
-        xs,
-        norm(harper17_solution[param][0], harper17_solution[param][1]).pdf(xs),
-        color="k",
-        label="Harper+ 17 solution",
-    )
+    if param not in ["alpha0", "delta0"]:
+        xs = np.linspace(
+            harper17_solution[param][0] - 5 * harper17_solution[param][1],
+            harper17_solution[param][0] + 5 * harper17_solution[param][1],
+        )
+        a.plot(
+            xs,
+            norm(harper17_solution[param][0], harper17_solution[param][1]).pdf(xs),
+            color="k",
+            label="Harper+ 17 table 4, $\sigma_{{radio}}$ = 2.4mas",
+        )
+
+ax[3].set_xlabel("$\Delta\\alpha$cos($\delta$) [mas]")
+ax[4].set_xlabel("$\Delta\\delta$ [mas]")
+
+
+# # plx vs pm_ra
+# ax[3].hist2d(beetle_results.post[:, 6], beetle_results.post[:, 7], bins=30)
+# ax[3].set_xlabel(beetle_results.labels[6])
+# ax[3].set_ylabel(beetle_results.labels[7])
+
+# # plx vs pm_dec
+# ax[4].hist2d(beetle_results.post[:, 6], beetle_results.post[:, 8], bins=30)
+# ax[4].set_xlabel(beetle_results.labels[6])
+# ax[4].set_ylabel(beetle_results.labels[8])
+
 ax[0].legend()
 
 plt.tight_layout()

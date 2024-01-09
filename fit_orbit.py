@@ -13,6 +13,7 @@ fit_planet = False  # if True, fit for planet parameters
 radio_jit = 2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio positions
 hip_dvd = True
 normalizie_hip_errs = True
+error_norm_factor = 1  # 4.5833027797089265  # [mas] Harper+ 17 fit also multiplies by a factor to get chi2_red = 1
 
 fit_name = "planet{}_dvd{}_renormHIP{}".format(fit_planet, hip_dvd, normalizie_hip_errs)
 
@@ -20,8 +21,12 @@ fit_name = "planet{}_dvd{}_renormHIP{}".format(fit_planet, hip_dvd, normalizie_h
 input_file = os.path.join("data/data.csv")
 data_table = read_input.read_file(input_file)
 
-data_table["quant1_err"] = np.sqrt(data_table["quant1_err"] ** 2 + radio_jit**2)
-data_table["quant2_err"] = np.sqrt(data_table["quant2_err"] ** 2 + radio_jit**2)
+data_table["quant1_err"] = np.sqrt(
+    (error_norm_factor * data_table["quant1_err"]) ** 2 + radio_jit**2
+)
+data_table["quant2_err"] = np.sqrt(
+    (error_norm_factor * data_table["quant2_err"]) ** 2 + radio_jit**2
+)
 
 num_secondary_bodies = 1  # number of planets/companions orbiting your primary
 hip_num = "027989"  # Betelgeuse
@@ -110,32 +115,38 @@ else:
 
     beetle_system.sys_priors[alpha0_index].minval = -20
     beetle_system.sys_priors[delta0_index].maxval = 20
+    beetle_system.sys_priors[delta0_index].minval = -20
+
+    # beetle_system.sys_priors[alpha0_index] = -5.096365517052970
+    # beetle_system.sys_priors[delta0_index] = 1.22065441367916
 
 
 # print out the priors to make sure everything looks fine
-print(list(zip(beetle_system.labels, beetle_system.sys_priors)))
+# print(list(zip(beetle_system.labels, beetle_system.sys_priors)))
 
 """
 Run MCMC
 """
-num_threads = 50  # 50
-num_temps = 20  # 20
-num_walkers = 100  # 1000
-n_steps_per_walker = 1000  # 10_000
-num_steps = num_walkers * n_steps_per_walker
-burn_steps = 50  # 10_000
-thin = 1  # 100
 
-beetle_sampler = sampler.MCMC(
-    beetle_system,
-    num_threads=num_threads,
-    num_temps=num_temps,
-    num_walkers=num_walkers,
-)
+if __name__ == "__main__":
+    num_threads = 50
+    num_temps = 20
+    num_walkers = 100
+    n_steps_per_walker = 1_000
+    num_steps = num_walkers * n_steps_per_walker
+    burn_steps = 1_00
+    thin = 1
 
-assert beetle_sampler.system.hipparcos_IAD.renormalize_errors
+    beetle_sampler = sampler.MCMC(
+        beetle_system,
+        num_threads=num_threads,
+        num_temps=num_temps,
+        num_walkers=num_walkers,
+    )
 
-beetle_sampler.run_sampler(num_steps, burn_steps=burn_steps, thin=thin)
-beetle_sampler.results.save_results(
-    "results/{}_burn{}_total{}.hdf5".format(fit_name, burn_steps, num_steps)
-)
+    assert beetle_sampler.system.hipparcos_IAD.renormalize_errors
+
+    beetle_sampler.run_sampler(num_steps, burn_steps=burn_steps, thin=thin)
+    beetle_sampler.results.save_results(
+        "results/{}_burn{}_total{}.hdf5".format(fit_name, burn_steps, num_steps)
+    )
