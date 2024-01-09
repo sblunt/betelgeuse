@@ -9,10 +9,12 @@ Hipparcos data as Hipparcos does.
 # TODO: clean up documentation for this and other files
 """
 
-fit_planet = False  # if True, fit for planet parameters
-radio_jit = 2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio positions
-hip_dvd = True
-normalizie_hip_errs = True
+fit_planet = True  # if True, fit for planet parameters
+radio_jit = (
+    0  # 2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio positions
+)
+hip_dvd = False
+normalizie_hip_errs = False
 error_norm_factor = 1  # 4.5833027797089265  # [mas] Harper+ 17 fit also multiplies by a factor to get chi2_red = 1
 
 fit_name = "planet{}_dvd{}_renormHIP{}".format(fit_planet, hip_dvd, normalizie_hip_errs)
@@ -92,7 +94,7 @@ delta0_index = beetle_system.param_idx["delta0"]
 if fit_planet:
     # set uniform primary mass prior
     beetle_system.sys_priors[m0_index] = priors.UniformPrior(
-        15, 20
+        10, 25
     )  # big range, lots of unc for Betelgeuse
 
     # set log-uniform secondary mass prior
@@ -113,12 +115,10 @@ else:
     beetle_system.sys_priors[inc1_index] = 0
     beetle_system.sys_priors[tau1_index] = 0
 
+    # increase prior limits (useful for radio-only fits)
     beetle_system.sys_priors[alpha0_index].minval = -20
     beetle_system.sys_priors[delta0_index].maxval = 20
     beetle_system.sys_priors[delta0_index].minval = -20
-
-    # beetle_system.sys_priors[alpha0_index] = -5.096365517052970
-    # beetle_system.sys_priors[delta0_index] = 1.22065441367916
 
 
 # print out the priors to make sure everything looks fine
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     num_threads = 50
     num_temps = 20
     num_walkers = 100
-    n_steps_per_walker = 1_000
+    n_steps_per_walker = 10_000
     num_steps = num_walkers * n_steps_per_walker
     burn_steps = 1_00
     thin = 1
@@ -144,7 +144,7 @@ if __name__ == "__main__":
         num_walkers=num_walkers,
     )
 
-    assert beetle_sampler.system.hipparcos_IAD.renormalize_errors
+    # assert beetle_sampler.system.hipparcos_IAD.renormalize_errors
 
     beetle_sampler.run_sampler(num_steps, burn_steps=burn_steps, thin=thin)
     beetle_sampler.results.save_results(
