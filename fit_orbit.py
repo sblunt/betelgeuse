@@ -131,11 +131,11 @@ Run MCMC
 if __name__ == "__main__":
     num_threads = 50
     num_temps = 20
-    num_walkers = 100
-    n_steps_per_walker = 10_000
+    num_walkers = 1000
+    n_steps_per_walker = 50_000
     num_steps = num_walkers * n_steps_per_walker
     burn_steps = 1_00
-    thin = 1
+    thin = 10
 
     beetle_sampler = sampler.MCMC(
         beetle_system,
