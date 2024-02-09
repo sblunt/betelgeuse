@@ -10,14 +10,15 @@ import matplotlib.pyplot as plt
 Convenience script to convert data from download format to orbitize format.
 
 Hipparcos measurements (from 2007 van Leeuwen and more modern reductions)
-are given in ICRS frame. All radio data are also in this frame. This script:
-- subtracts the reported Hipparcos position from the radio positions. This is the
-  format orbitize! expects. 
+are given in ICRS frame. All radio data are also in this frame. This script
+subtracts the reported Hipparcos position from the radio positions. This is the
+format orbitize! expects. 
 
 Note: this file uses the new (2014) Hipparcos reduction value to subtract, but the
 derived values (except var) are all the same as the DVD values, so it doesn't matter.
 
-# NOTE: The input is delta(RA)*cos(delta0). This is output from the astropy utility.
+NOTE: The orbitize! input expects delta(RA), not delta(RA) * cos(dec0). delta(RA)
+is output from the astropy utility, which I sanity check in test_sky_coord.py
 """
 
 

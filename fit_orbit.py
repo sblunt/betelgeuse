@@ -6,16 +6,17 @@ import numpy as np
 Note: in Harper+ 2017 fit, I believe they assume the same cosmic jitter for the
 Hipparcos data as Hipparcos does.
 
+# TODO: formalize the non-inclusion of Hipparcos IAD for testing purposes
 # TODO: clean up documentation for this and other files
 """
 
-fit_planet = True  # if True, fit for planet parameters
+fit_planet = False  # if True, fit for planet parameters
 radio_jit = (
-    0  # 2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio positions
+     2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio positions
 )
 hip_dvd = False
-normalizie_hip_errs = False
-error_norm_factor = 1  # 4.5833027797089265  # [mas] Harper+ 17 fit also multiplies by a factor to get chi2_red = 1
+normalizie_hip_errs = True 
+error_norm_factor = 1.2957671 # this is the number Graham scales by for the 2.4mas radio-only fit (private comm) [mas]
 
 fit_name = "planet{}_dvd{}_renormHIP{}".format(fit_planet, hip_dvd, normalizie_hip_errs)
 
@@ -23,11 +24,11 @@ fit_name = "planet{}_dvd{}_renormHIP{}".format(fit_planet, hip_dvd, normalizie_h
 input_file = os.path.join("data/data.csv")
 data_table = read_input.read_file(input_file)
 
-data_table["quant1_err"] = np.sqrt(
-    (error_norm_factor * data_table["quant1_err"]) ** 2 + radio_jit**2
+data_table["quant1_err"] = error_norm_factor * np.sqrt(
+    data_table["quant1_err"] ** 2 + radio_jit**2
 )
-data_table["quant2_err"] = np.sqrt(
-    (error_norm_factor * data_table["quant2_err"]) ** 2 + radio_jit**2
+data_table["quant2_err"] = error_norm_factor * np.sqrt(
+    data_table["quant2_err"] ** 2 + radio_jit**2
 )
 
 num_secondary_bodies = 1  # number of planets/companions orbiting your primary
@@ -76,7 +77,7 @@ Change priors
 
 # set uniform parallax prior
 plx_index = beetle_system.param_idx["plx"]
-beetle_system.sys_priors[plx_index] = priors.UniformPrior(0, 10)
+beetle_system.sys_priors[plx_index] = priors.UniformPrior(-10, 15)
 
 
 m0_index = beetle_system.param_idx["m0"]
@@ -118,6 +119,7 @@ else:
     # increase prior limits (useful for radio-only fits)
     beetle_system.sys_priors[alpha0_index].minval = -20
     beetle_system.sys_priors[delta0_index].maxval = 20
+    beetle_system.sys_priors[alpha0_index].maxval = 20
     beetle_system.sys_priors[delta0_index].minval = -20
 
 
@@ -131,11 +133,11 @@ Run MCMC
 if __name__ == "__main__":
     num_threads = 50
     num_temps = 20
-    num_walkers = 1000
-    n_steps_per_walker = 50_000
+    num_walkers = 50 # 1000
+    n_steps_per_walker = 10_000 # 50_000
     num_steps = num_walkers * n_steps_per_walker
-    burn_steps = 1_00
-    thin = 10
+    burn_steps = 100
+    thin = 1 # 10
 
     beetle_sampler = sampler.MCMC(
         beetle_system,
