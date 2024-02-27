@@ -10,13 +10,13 @@ Hipparcos data as Hipparcos does.
 # TODO: clean up documentation for this and other files
 """
 
-fit_planet = False  # if True, fit for planet parameters
+fit_planet = True  # if True, fit for planet parameters
 radio_jit = (
-     2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio positions
+    0  # 2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio positions
 )
 hip_dvd = False
-normalizie_hip_errs = True 
-error_norm_factor = 1.2957671 # this is the number Graham scales by for the 2.4mas radio-only fit (private comm) [mas]
+normalizie_hip_errs = False
+error_norm_factor = 0  # 1.2957671  # this is the number Graham scales by for the 2.4mas radio-only fit (private comm) [mas]
 
 fit_name = "planet{}_dvd{}_renormHIP{}".format(fit_planet, hip_dvd, normalizie_hip_errs)
 
@@ -101,8 +101,8 @@ if fit_planet:
     # set log-uniform secondary mass prior
     beetle_system.sys_priors[m1_index] = priors.LogUniformPrior(0.1, 10)
 
-    # set period prior between 3 and 10 years
-    beetle_system.sys_priors[p1_index] = priors.UniformPrior(3, 10)
+    # set period prior between 100 and 2600 days
+    beetle_system.sys_priors[p1_index] = priors.UniformPrior(100 / 365.0, 2600 / 365.0)
 
 
 else:
@@ -133,11 +133,11 @@ Run MCMC
 if __name__ == "__main__":
     num_threads = 50
     num_temps = 20
-    num_walkers = 50 # 1000
-    n_steps_per_walker = 10_000 # 50_000
+    num_walkers = 1000
+    n_steps_per_walker = 50_000
     num_steps = num_walkers * n_steps_per_walker
     burn_steps = 100
-    thin = 1 # 10
+    thin = 10
 
     beetle_sampler = sampler.MCMC(
         beetle_system,
