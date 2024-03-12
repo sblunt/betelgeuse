@@ -101,8 +101,8 @@ if fit_planet:
     # set log-uniform secondary mass prior
     beetle_system.sys_priors[m1_index] = priors.LogUniformPrior(0.1, 10)
 
-    # set period prior between 100 and 2600 days
-    beetle_system.sys_priors[p1_index] = priors.UniformPrior(100 / 365.0, 2600 / 365.0)
+    # set period prior
+    beetle_system.sys_priors[p1_index] = priors.UniformPrior(1000, 2700)
 
 
 else:
