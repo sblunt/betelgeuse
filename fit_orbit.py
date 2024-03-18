@@ -102,7 +102,9 @@ if fit_planet:
     beetle_system.sys_priors[m1_index] = priors.LogUniformPrior(0.1, 10)
 
     # set period prior
-    beetle_system.sys_priors[p1_index] = priors.UniformPrior(1000, 2700)
+    beetle_system.sys_priors[p1_index] = priors.UniformPrior(
+        1000 / 365.25, 2700 / 365.25
+    )
 
 
 else:
