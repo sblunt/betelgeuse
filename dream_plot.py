@@ -1,26 +1,24 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import os
-from orbitize import results, plot
-from astropy import units as u, constants as cst
+from orbitize import results
+from astropy import constants as cst
 from astropy.time import Time
 
 
 def compute_iad_tangent_points(
-    post,
-    param_idx,
-    epochs_absc,
+    ra_st_predictions,
+    dec_predictions,
     ra_absc_st,
     dec_absc,
     cosphi,
     sinphi,
-    alphadec0_epoch=Time(1991.25, format="decimalyear").mjd,
 ):
     """
     Args:
-        post (np.array of float): n_params x n_orbits array subset of orbitize posterior
-        param_idx (dict): orbitize.system.param_idx mapping labels to indices
-        epochs_absc (np.array of float): epochs of Hipparcos scans [mjd]
+        ra_st_predictions (np.array of float): n_epochs x n_orbits array of RA*cos(delta0)
+            model predictions to be compared to the IAD
+        dec_predictions (np.array of float): n_epochs x n_orbits array of decl
+            model predictions to be compared to the IAD
         ra_absc_st (np.array of float): array of RA*cos(delta0) absciscca points
             of Hipparcos data relative to alphadec0_epoch
         dec_absc (np.array of float): array of decl absciscca points
@@ -33,20 +31,43 @@ def compute_iad_tangent_points(
             np.array of float: n_epochs x n_orbits array of RA tangent points
             np.array of float:  n_epochs x n_orbits array of decl tangent points
     """
-    pass
+    n_orbits = ra_st_predictions.shape[1]
+    n_epochs = ra_st_predictions.shape[0]
+    tangent_points_ra_st = np.empty((n_epochs, n_orbits))
+    tangent_points_decra_st = np.empty((n_epochs, n_orbits))
+
+    for i in range(n_orbits):
+        m = sinphi / cosphi
+        a1 = 1 / m
+        b1 = 1
+        c1 = -(dec_predictions[:, i] + 1 / m * ra_st_predictions[:, i])
+        a2 = -m
+        b2 = 1
+        c2 = -(dec_absc - m * ra_absc_st)
+        tangent_points_ra_st[:, i] = (b1 * c2 - b2 * c1) / (a1 * b2 - a2 * b1)
+        tangent_points_decra_st[:, i] = (c1 * a2 - c2 * a1) / (a1 * b2 - a2 * b1)
+
+    return tangent_points_ra_st, tangent_points_decra_st
 
 
-def compute_tangent_points_plus_error(ra_absc_st, dec_absc, cosphi, sinphi, epsilon):
+def compute_tangent_points_plus_error(
+    ra_st_predictions, dec_predictions, ra_absc_st, dec_absc, cosphi, sinphi, epsilon
+):
     """
     This function computes the tangent point on a scan plus an error (epsilon)
 
     Args:
+        ra_st_predictions (np.array of float): n_epochs x n_orbits array of RA*cos(delta0)
+            model predictions to be compared to the IAD
+        dec_predictions (np.array of float): n_epochs x n_orbits array of decl
+            model predictions to be compared to the IAD
         ra_absc_st (np.array of float): array of RA*cos(delta0) absciscca points
             of Hipparcos data relative to alphadec0_epoch
         dec_absc (np.array of float): array of decl absciscca points
             of Hipparcos data relative to alphadec0_epoch
         cosphi (np.array of float): cosine of scan angles of Hipparcos scans
         sinphi (np.array of float): sine of scan angles of Hipparcos scans
+        epsilon (np.array of float): scan errors on Hipparcos data
 
     Returns:
         tuple of:
@@ -55,7 +76,23 @@ def compute_tangent_points_plus_error(ra_absc_st, dec_absc, cosphi, sinphi, epsi
             np.array of float: n_epochs array of decl absciscca points offset
                 by epsilon
     """
-    pass
+
+    ra_st_tangent, dec_tangent = compute_iad_tangent_points(
+        ra_st_predictions,
+        dec_predictions,
+        ra_absc_st,
+        dec_absc,
+        cosphi,
+        sinphi,
+    )
+    shifted_absc_ra_st = ra_st_tangent + np.tile(
+        epsilon / sinphi, dec_tangent.shape[1]
+    ).reshape(dec_tangent.shape)
+    shifted_absc_dec = dec_tangent + np.tile(
+        epsilon * cosphi / sinphi, dec_tangent.shape[1]
+    ).reshape(dec_tangent.shape)
+
+    return shifted_absc_ra_st, shifted_absc_dec
 
 
 def compute_orbit_prediction(post, epochs_mjd, system):
@@ -67,7 +104,7 @@ def compute_orbit_prediction(post, epochs_mjd, system):
 
     Returns:
         tuple of:
-            np.array of float: n_epochs x n_orbits array of RA predictions
+            np.array of float: n_epochs x n_orbits array of RA*cos(delta0) predictions
             np.array of float:  n_epochs x n_orbits array of decl predictions
     """
 
@@ -76,7 +113,10 @@ def compute_orbit_prediction(post, epochs_mjd, system):
         epochs_mjd,
     )
 
-    return raoff_orbit[:, 0, :], deoff_orbit[:, 0, :]
+    return (
+        raoff_orbit[:, 0, :] * np.cos(np.radians(system.hipparcos_IAD.delta0)),
+        deoff_orbit[:, 0, :],
+    )
 
 
 def compute_pm_prediction(post, epochs_mjd, system):
@@ -213,6 +253,8 @@ def plot_top_panel(
         color="purple",
         ls="",
         marker="o",
+        elinewidth=5,
+        alpha=0.2,
     )
     ax[1].errorbar(
         Time(astr_data_times_mjd, format="mjd").decimalyear,
@@ -221,50 +263,87 @@ def plot_top_panel(
         color="purple",
         ls="",
         marker="o",
+        elinewidth=5,
+        alpha=0.2,
     )
 
-    # # compute tangent points of hip scans wrt sampled posterior values
-    # ra_tangent_pts, dec_tangent_pts = compute_iad_tangent_points(
-    #     post, param_idx, epochs_absc, ra_absc_st, dec_absc, cosphi, sinphi
-    # )
-    # ax[0].errorbar(
-    #     epochs_absc, np.median(ra_tangent_pts, axis=1), np.std(ra_tangent_pts, axis=1)
-    # )
-    # ax[1].errorbar(
-    #     epochs_absc,
-    #     np.median(dec_tangent_pts, axis=1),
-    #     np.std(dec_tangent_pts, axis=1),
-    # )
+    ra_pm_iad, dec_pm_iad = compute_pm_prediction(post, epochs_absc, system)
+    ra_plx_iad, dec_plx_iad = compute_plx_prediction(post, epochs_absc, system)
+    ra_orbit_iad, dec_orbit_iad = compute_orbit_prediction(post, epochs_absc, system)
+    ra_pm_plx_orbit_iad = ra_pm_iad + ra_plx_iad + ra_orbit_iad
+    dec_pm_plx_orbit_iad = dec_pm_iad + dec_plx_iad + dec_orbit_iad
 
-    # # compute difference between hip scan +/- scan error & median prediction
-    # ra_absc_st_plus, dec_absc_plus = compute_tangent_points_plus_error(
-    #     ra_absc_st, dec_absc, cosphi, sinphi, epsilon
-    # )
-    # ra_absc_st_minus, dec_absc_minus = compute_tangent_points_plus_error(
-    #     ra_absc_st, dec_absc, cosphi, sinphi, -epsilon
-    # )
+    # compute tangent points of hip scans wrt sampled posterior values
+    ra_tangent_pts, dec_tangent_pts = compute_iad_tangent_points(
+        ra_pm_plx_orbit_iad,
+        dec_pm_plx_orbit_iad,
+        ra_absc_st,
+        dec_absc,
+        cosphi,
+        sinphi,
+    )
+    ax[0].errorbar(
+        Time(epochs_absc, format="mjd").decimalyear,
+        np.median(ra_tangent_pts, axis=1),
+        np.std(ra_tangent_pts, axis=1),
+        ls="",
+        marker="o",
+        color="blue",
+        elinewidth=5,
+        alpha=0.2,
+    )
+    ax[1].errorbar(
+        Time(epochs_absc, format="mjd").decimalyear,
+        np.median(dec_tangent_pts, axis=1),
+        np.std(dec_tangent_pts, axis=1),
+        ls="",
+        marker="o",
+        color="blue",
+        elinewidth=5,
+        alpha=0.2,
+    )
 
-    # ra_tangent_pts_plus, dec_tangent_pts_plus = compute_iad_tangent_points(
-    #     post, param_idx, epochs_absc, ra_absc_st_plus, dec_absc_plus, cosphi, sinphi
-    # )
-    # ra_tangent_pts_minus, dec_tangent_pts_minus = compute_iad_tangent_points(
-    #     post, param_idx, epochs_absc, ra_absc_st_minus, dec_absc_minus, cosphi, sinphi
-    # )
+    # compute difference between hip scan +/- scan error & median prediction
+    ra_tangent_pts_plus, dec_tangent_pts_plus = compute_tangent_points_plus_error(
+        ra_pm_plx_orbit_iad,
+        dec_pm_plx_orbit_iad,
+        ra_absc_st,
+        dec_absc,
+        cosphi,
+        sinphi,
+        epsilon,
+    )
+    ra_tangent_pts_minus, dec_tangent_pts_minus = compute_tangent_points_plus_error(
+        ra_pm_plx_orbit_iad,
+        dec_pm_plx_orbit_iad,
+        ra_absc_st,
+        dec_absc,
+        cosphi,
+        sinphi,
+        -epsilon,
+    )
 
-    # ra_scan_errors = np.array(
-    #     np.median(ra_tangent_pts_plus, axis=1), np.median(ra_tangent_pts_minus, axis=1)
-    # ).T
-    # dec_scan_errors = np.array(
-    #     np.median(dec_tangent_pts_plus, axis=1),
-    #     np.median(dec_tangent_pts_minus, axis=1),
-    # ).T
+    ra_scan_errors = np.array(
+        [np.std(ra_tangent_pts_plus, axis=1), np.std(ra_tangent_pts_minus, axis=1)]
+    )
+    dec_scan_errors = np.array(
+        [np.std(dec_tangent_pts_plus, axis=1), np.std(dec_tangent_pts_minus, axis=1)]
+    )
 
-    # ax[0].errorbar(
-    #     epochs_absc, np.median(ra_tangent_pts, axis=1), ra_scan_errors, alpha=0.2
-    # )
-    # ax[1].errorbar(
-    #     epochs_absc, np.median(dec_tangent_pts, axis=1), dec_scan_errors, alpha=0.2
-    # )
+    ax[0].errorbar(
+        Time(epochs_absc, format="mjd").decimalyear,
+        np.median(ra_tangent_pts, axis=1),
+        ra_scan_errors,
+        alpha=0.2,
+        ls="",
+    )
+    ax[1].errorbar(
+        Time(epochs_absc, format="mjd").decimalyear,
+        np.median(dec_tangent_pts, axis=1),
+        dec_scan_errors,
+        alpha=0.2,
+        ls="",
+    )
 
 
 def plot_middle_panel(
@@ -338,6 +417,8 @@ def plot_middle_panel(
         color="purple",
         ls="",
         marker="o",
+        elinewidth=5,
+        alpha=0.2,
     )
     ax[1].errorbar(
         Time(astr_data_times_mjd, format="mjd").decimalyear,
@@ -346,6 +427,8 @@ def plot_middle_panel(
         color="purple",
         ls="",
         marker="o",
+        elinewidth=5,
+        alpha=0.2,
     )
 
     # plot residuals and model subtraction errors
@@ -358,7 +441,6 @@ def plot_middle_panel(
             ls="",
             marker="o",
             alpha=0.2,
-            elinewidth=5,
         )
         ax[1].errorbar(
             Time(astr_data_times_mjd[i], format="mjd").decimalyear,
@@ -368,8 +450,91 @@ def plot_middle_panel(
             ls="",
             marker="o",
             alpha=0.2,
-            elinewidth=5,
         )
+
+    ra_pm_iad, dec_pm_iad = compute_pm_prediction(post, epochs_absc, system)
+    ra_plx_iad, dec_plx_iad = compute_plx_prediction(post, epochs_absc, system)
+    ra_orbit_iad, dec_orbit_iad = compute_orbit_prediction(post, epochs_absc, system)
+    ra_pm_plx_orbit_iad = ra_pm_iad + ra_plx_iad + ra_orbit_iad
+    dec_pm_plx_orbit_iad = dec_pm_iad + dec_plx_iad + dec_orbit_iad
+
+    # compute tangent points of hip scans wrt sampled posterior values
+    ra_tangent_pts, dec_tangent_pts = compute_iad_tangent_points(
+        ra_pm_plx_orbit_iad,
+        dec_pm_plx_orbit_iad,
+        ra_absc_st,
+        dec_absc,
+        cosphi,
+        sinphi,
+    )
+    ax[0].errorbar(
+        Time(epochs_absc, format="mjd").decimalyear,
+        np.median(ra_tangent_pts - ra_pm_iad, axis=1),
+        np.sqrt(np.std(ra_tangent_pts, axis=1) ** 2 + np.std(ra_pm_iad, axis=1) ** 2),
+        ls="",
+        marker="o",
+        color="blue",
+        elinewidth=5,
+        alpha=0.2,
+    )
+    ax[1].errorbar(
+        Time(epochs_absc, format="mjd").decimalyear,
+        np.median(dec_tangent_pts - dec_pm_iad, axis=1),
+        np.sqrt(np.std(dec_tangent_pts, axis=1) ** 2 + np.std(dec_pm_iad, axis=1) ** 2),
+        ls="",
+        marker="o",
+        color="blue",
+        elinewidth=5,
+        alpha=0.2,
+    )
+
+    # compute difference between hip scan +/- scan error & median prediction
+    ra_tangent_pts_plus, dec_tangent_pts_plus = compute_tangent_points_plus_error(
+        ra_pm_plx_orbit_iad,
+        dec_pm_plx_orbit_iad,
+        ra_absc_st,
+        dec_absc,
+        cosphi,
+        sinphi,
+        epsilon,
+    )
+    ra_tangent_pts_minus, dec_tangent_pts_minus = compute_tangent_points_plus_error(
+        ra_pm_plx_orbit_iad,
+        dec_pm_plx_orbit_iad,
+        ra_absc_st,
+        dec_absc,
+        cosphi,
+        sinphi,
+        -epsilon,
+    )
+
+    ra_scan_errors = np.array(
+        [
+            np.std(ra_tangent_pts_plus, axis=1),
+            np.std(ra_tangent_pts_minus, axis=1),
+        ]
+    )
+    dec_scan_errors = np.array(
+        [
+            np.std(dec_tangent_pts_plus, axis=1),
+            np.std(dec_tangent_pts_minus, axis=1),
+        ]
+    )
+
+    ax[0].errorbar(
+        Time(epochs_absc, format="mjd").decimalyear,
+        np.median(ra_tangent_pts - ra_pm_iad, axis=1),
+        ra_scan_errors,
+        alpha=0.2,
+        ls="",
+    )
+    ax[1].errorbar(
+        Time(epochs_absc, format="mjd").decimalyear,
+        np.median(dec_tangent_pts - dec_pm_iad, axis=1),
+        dec_scan_errors,
+        alpha=0.2,
+        ls="",
+    )
 
 
 def plot_bottom_panel(
@@ -443,6 +608,8 @@ def plot_bottom_panel(
         color="purple",
         ls="",
         marker="o",
+        elinewidth=5,
+        alpha=0.2,
     )
     ax[1].errorbar(
         Time(astr_data_times_mjd, format="mjd").decimalyear,
@@ -451,6 +618,8 @@ def plot_bottom_panel(
         color="purple",
         ls="",
         marker="o",
+        elinewidth=5,
+        alpha=0.2,
     )
 
     # plot residuals and model subtraction errors
@@ -463,7 +632,6 @@ def plot_bottom_panel(
             ls="",
             marker="o",
             alpha=0.2,
-            elinewidth=5,
         )
         ax[1].errorbar(
             Time(astr_data_times_mjd[i], format="mjd").decimalyear,
@@ -473,14 +641,106 @@ def plot_bottom_panel(
             ls="",
             marker="o",
             alpha=0.2,
-            elinewidth=5,
         )
+
+    ra_pm_iad, dec_pm_iad = compute_pm_prediction(post, epochs_absc, system)
+    ra_plx_iad, dec_plx_iad = compute_plx_prediction(post, epochs_absc, system)
+    ra_orbit_iad, dec_orbit_iad = compute_orbit_prediction(post, epochs_absc, system)
+    ra_pm_plx_orbit_iad = ra_pm_iad + ra_plx_iad + ra_orbit_iad
+    dec_pm_plx_orbit_iad = dec_pm_iad + dec_plx_iad + dec_orbit_iad
+    ra_pm_plx_iad = ra_pm_iad + ra_plx_iad
+    dec_pm_plx_iad = dec_pm_iad + dec_plx_iad
+
+    # compute tangent points of hip scans wrt sampled posterior values
+    ra_tangent_pts, dec_tangent_pts = compute_iad_tangent_points(
+        ra_pm_plx_orbit_iad,
+        dec_pm_plx_orbit_iad,
+        ra_absc_st,
+        dec_absc,
+        cosphi,
+        sinphi,
+    )
+    ax[0].errorbar(
+        Time(epochs_absc, format="mjd").decimalyear,
+        np.median(ra_tangent_pts - ra_pm_plx_orbit_iad, axis=1),
+        np.sqrt(
+            np.std(ra_tangent_pts, axis=1) ** 2
+            + np.std(ra_pm_plx_orbit_iad, axis=1) ** 2
+        ),
+        ls="",
+        marker="o",
+        color="blue",
+        elinewidth=5,
+        alpha=0.2,
+    )
+    ax[1].errorbar(
+        Time(epochs_absc, format="mjd").decimalyear,
+        np.median(dec_tangent_pts - dec_pm_plx_orbit_iad, axis=1),
+        np.sqrt(
+            np.std(dec_tangent_pts, axis=1) ** 2
+            + np.std(dec_pm_plx_orbit_iad, axis=1) ** 2
+        ),
+        ls="",
+        marker="o",
+        color="blue",
+        elinewidth=5,
+        alpha=0.2,
+    )
+
+    # compute difference between hip scan +/- scan error & median prediction
+    ra_tangent_pts_plus, dec_tangent_pts_plus = compute_tangent_points_plus_error(
+        ra_pm_plx_orbit_iad,
+        dec_pm_plx_orbit_iad,
+        ra_absc_st,
+        dec_absc,
+        cosphi,
+        sinphi,
+        epsilon,
+    )
+    ra_tangent_pts_minus, dec_tangent_pts_minus = compute_tangent_points_plus_error(
+        ra_pm_plx_orbit_iad,
+        dec_pm_plx_orbit_iad,
+        ra_absc_st,
+        dec_absc,
+        cosphi,
+        sinphi,
+        -epsilon,
+    )
+
+    ra_scan_errors = np.array(
+        [
+            np.std(ra_tangent_pts_plus, axis=1),
+            np.std(ra_tangent_pts_minus, axis=1),
+        ]
+    )
+    dec_scan_errors = np.array(
+        [
+            np.std(dec_tangent_pts_plus, axis=1),
+            np.std(dec_tangent_pts_minus, axis=1),
+        ]
+    )
+
+    ax[0].errorbar(
+        Time(epochs_absc, format="mjd").decimalyear,
+        np.median(ra_tangent_pts - ra_pm_plx_iad, axis=1),
+        ra_scan_errors,
+        alpha=0.2,
+        ls="",
+    )
+    ax[1].errorbar(
+        Time(epochs_absc, format="mjd").decimalyear,
+        np.median(dec_tangent_pts - dec_pm_plx_iad, axis=1),
+        dec_scan_errors,
+        alpha=0.2,
+        ls="",
+    )
 
 
 if __name__ == "__main__":
 
     # load results
-    run_name = "planetTrue_dvdFalse_renormHIPFalse_burn100_total1000000"
+    # run_name = "planetTrue_dvdFalse_renormHIPFalse_burn100_total1000000"
+    run_name = "planetTrue_dvdFalse_renormHIPFalse_burn100_total50000000"
     beetle_results = results.Results()
     beetle_results.load_results("results/{}.hdf5".format(run_name))
 
@@ -565,4 +825,24 @@ if __name__ == "__main__":
         sinphi,
         epsilon,
     )
-    plt.savefig("dreamplot.png", dpi=250)
+
+    ax[-1, 0].set_xlabel("Time [yr]")
+    ax[-1, 1].set_xlabel("Time [yr]")
+    ax[1, 0].set_ylabel("$\\Delta$R.A. $\\cos{\\delta_0}$ [mas]")
+    ax[1, 1].set_ylabel("$\\Delta$decl. [mas]")
+
+    zoomout = False
+
+    if zoomout:
+        plt.savefig("dreamplot.png", dpi=250)
+    else:
+
+        for a in ax.flatten():
+            a.set_xlim(1990, 1992.5)
+        for a in ax[0]:
+            a.set_ylim(-100, 100)
+        for a in ax[1]:
+            a.set_ylim(-10, 10)
+        for a in ax[2]:
+            a.set_ylim(-10, 10)
+        plt.savefig("dreamplot_zoomin.png", dpi=250)

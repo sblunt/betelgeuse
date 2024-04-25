@@ -6,19 +6,32 @@ import numpy as np
 Note: in Harper+ 2017 fit, I believe they assume the same cosmic jitter for the
 Hipparcos data as Hipparcos does.
 
-# TODO: formalize the non-inclusion of Hipparcos IAD for testing purposes
-# TODO: clean up documentation for this and other files
+Fits to run:
+1. "standard" fit-- all data, no jitter or error inflation. 1a. with planet, 1b. no planet
+2. "Hipparcos only" fit -- no jitter or error inflation. 2a. with planet, 2b. no planet
+3. "radio only" -- no jitter or error inflation: no planet, use for 4
+4. "Hipparcos only, radio PM" fit -- no jitter or error inflation. 4a. with planet, 4b. no planet. PM constrained by radio fit.
+
+
+Fits to show for comparison:
+1. Hipparcos reproduction
+2. Harper+ 17 reproduction
+
+TODO: formalize non-inclusion of hipparcos data
 """
 
-fit_planet = True  # if True, fit for planet parameters
+fit_planet = False  # if True, fit for planet parameters
 radio_jit = (
     0  # 2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio positions
 )
 hip_dvd = False
 normalizie_hip_errs = False
+fit_radio = False
 error_norm_factor = 0  # 1.2957671  # this is the number Graham scales by for the 2.4mas radio-only fit (private comm) [mas]
 
-fit_name = "planet{}_dvd{}_renormHIP{}".format(fit_planet, hip_dvd, normalizie_hip_errs)
+fit_name = "planet{}_dvd{}_renormHIP{}_fitradio{}".format(
+    fit_planet, hip_dvd, normalizie_hip_errs, fit_radio
+)
 
 
 input_file = os.path.join("data/data.csv")
@@ -30,6 +43,10 @@ data_table["quant1_err"] = error_norm_factor * np.sqrt(
 data_table["quant2_err"] = error_norm_factor * np.sqrt(
     data_table["quant2_err"] ** 2 + radio_jit**2
 )
+
+if not fit_radio:
+    # replace the radio astrometry with an empty data table
+    data_table = data_table[:0]
 
 num_secondary_bodies = 1  # number of planets/companions orbiting your primary
 hip_num = "027989"  # Betelgeuse
@@ -63,13 +80,15 @@ beetle_system = system.System(
     mass_err=mass_err,
     plx_err=plx_err,
     fitting_basis="Period",
+    restrict_angle_ranges=True,
 )
 
-# make sure orbitize! knows to fit for the proper motion and parallax
-assert beetle_system.pm_plx_predictor is not None
+if fit_radio:
+    # make sure orbitize! knows to fit for the proper motion and parallax
+    assert beetle_system.pm_plx_predictor is not None
 
-# make sure orbitize! correctly figures out which epochs are absolute astrometry
-assert len(beetle_system.stellar_astrom_epochs) == 18
+    # make sure orbitize! correctly figures out which epochs are absolute astrometry
+    assert len(beetle_system.stellar_astrom_epochs) == 18
 
 """
 Change priors
@@ -96,15 +115,19 @@ if fit_planet:
     # set uniform primary mass prior
     beetle_system.sys_priors[m0_index] = priors.UniformPrior(
         10, 25
-    )  # big range, lots of unc for Betelgeuse
+    )  # [Msun] big range, lots of unc for Betelgeuse
 
     # set log-uniform secondary mass prior
-    beetle_system.sys_priors[m1_index] = priors.LogUniformPrior(0.1, 10)
+    beetle_system.sys_priors[m1_index] = priors.LogUniformPrior(0.1, 10)  # [Msun]
 
     # set period prior
     beetle_system.sys_priors[p1_index] = priors.UniformPrior(
         1000 / 365.25, 2700 / 365.25
-    )
+    )  # [yr]
+
+    # fix e=0 and aop (undefined for circular orbit)
+    beetle_system.sys_priors[e1_index] = 0
+    beetle_system.sys_priors[aop1_index] = 0
 
 
 else:
@@ -126,17 +149,17 @@ else:
 
 
 # print out the priors to make sure everything looks fine
-# print(list(zip(beetle_system.labels, beetle_system.sys_priors)))
+print(list(zip(beetle_system.labels, beetle_system.sys_priors)))
 
 """
 Run MCMC
 """
 
 if __name__ == "__main__":
-    num_threads = 50
+    num_threads = 20
     num_temps = 20
     num_walkers = 1000
-    n_steps_per_walker = 50_000
+    n_steps_per_walker = 5_000  # 50_000
     num_steps = num_walkers * n_steps_per_walker
     burn_steps = 100
     thin = 10
@@ -148,7 +171,7 @@ if __name__ == "__main__":
         num_walkers=num_walkers,
     )
 
-    # assert beetle_sampler.system.hipparcos_IAD.renormalize_errors
+    assert not beetle_sampler.system.hipparcos_IAD.renormalize_errors
 
     beetle_sampler.run_sampler(num_steps, burn_steps=burn_steps, thin=thin)
     beetle_sampler.results.save_results(
