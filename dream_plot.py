@@ -346,6 +346,73 @@ def plot_top_panel(
     )
 
 
+def plot_top_panel_radec(
+    post,
+    param_idx,
+    system,
+    epochs2plot_mjd,
+    ax,
+    astr_data_times_mjd,
+    ra_data_values,
+    dec_data_values,
+    ra_data_errs,
+    dec_data_errs,
+    epochs_absc,
+    ra_absc_st,
+    dec_absc,
+    cosphi,
+    sinphi,
+    epsilon,
+):
+    """
+    Args:
+        post (np.array of float): n_params x n_orbits array subset of orbitize posterior
+        param_idx (dict): orbitize.system.param_idx mapping labels to indices
+        system (orbitize.system): system object used for orbit fit from which post was generated
+        epochs_mjd (np.array of float): times [in mjd] at which to compute predictions
+        ax (matplotlib.axis.Axis): where to put the plot
+        astr_data_times_mjd (np.array of float): times [in mjd] at which observed astrometry were
+            taken
+        ra_data_values (np.array of float): RA values of observed astrometry [mas]
+        dec_data_values (np.array of float): dec values of observed astrometry [mas]
+        ra_data_errs (np.array of float): RA errors on observed astrometry [mas]
+        dec_data_errs (np.array of float): dec errors on observed astrometry [mas]
+        epochs_absc (np.array of float): epochs [mjd] of Hipparcos scans
+        ra_absc_st (np.array of float): RA*cosdelta0 values of Hipparcos scan abscissca [mas] relative to
+            alphadec0_epoch
+        dec_absc: decl values of Hipparcos scan abscissca [mas] relative to
+            alphadec0_epoch
+        cosphi (np.array of float): cos of Hipparcos scans
+        sinphi (np.array of float): sine of Hipparcos scans
+        epsilon (np.array of float): error on Hipparcos scans
+    """
+    ra_pm, dec_pm = compute_pm_prediction(post, epochs2plot_mjd, system)
+    ra_plx, dec_plx = compute_plx_prediction(post, epochs2plot_mjd, system)
+    ra_orbit, dec_orbit = compute_orbit_prediction(post, epochs2plot_mjd, system)
+    ra_pm_plx_orbit = ra_pm + ra_plx + ra_orbit
+    dec_pm_plx_orbit = dec_pm + dec_plx + dec_orbit
+
+    for i in range(ra_pm_plx_orbit.shape[1]):
+        ax.plot(
+            ra_pm_plx_orbit[:, i],
+            dec_pm_plx_orbit[:, i],
+            color="grey",
+            alpha=0.2,
+        )
+
+    ax.errorbar(
+        ra_data_values,
+        dec_data_values,
+        xerr=ra_data_errs,
+        yerr=dec_data_errs,
+        color="purple",
+        ls="",
+        marker="o",
+        elinewidth=5,
+        alpha=0.2,
+    )
+
+
 def plot_middle_panel(
     post,
     param_idx,
@@ -739,8 +806,8 @@ def plot_bottom_panel(
 if __name__ == "__main__":
 
     # load results
-    # run_name = "planetTrue_dvdFalse_renormHIPFalse_burn100_total1000000"
-    run_name = "planetTrue_dvdFalse_renormHIPFalse_burn100_total50000000"
+    run_name = "planetTrue_dvdFalse_renormHIPFalse_burn100_total1000000_OLD"
+    # run_name = "planetTrue_dvdFalse_renormHIPFalse_burn100_total50000000"
     beetle_results = results.Results()
     beetle_results.load_results("results/{}.hdf5".format(run_name))
 
@@ -767,7 +834,7 @@ if __name__ == "__main__":
     # pick time at which to plot models
     epochs2plot = np.linspace(44000, 58000, int(1e3))
 
-    # make plot
+    # make plot vs time
     fig, ax = plt.subplots(3, 2, figsize=(30, 10), dpi=250, sharex=True)
     plt.subplots_adjust(hspace=0)
 
@@ -846,3 +913,26 @@ if __name__ == "__main__":
         for a in ax[2]:
             a.set_ylim(-10, 10)
         plt.savefig("dreamplot_zoomin.png", dpi=250)
+
+    # make plot RA vs decl.
+    fig, ax = plt.subplots(3, 1, figsize=(30, 5), dpi=250)
+    plot_top_panel_radec(
+        post,
+        beetle_results.system.param_idx,
+        beetle_results.system,
+        epochs2plot,
+        ax[0],
+        epochs_data,
+        ra_data,
+        dec_data,
+        ra_err_data,
+        dec_err_data,
+        hip_epochs,
+        hip_ra_absc,
+        hip_dec_absc,
+        cosphi,
+        sinphi,
+        epsilon,
+    )
+
+    plt.savefig("dream_plot_radec.png")

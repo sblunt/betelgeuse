@@ -7,8 +7,8 @@ Note: in Harper+ 2017 fit, I believe they assume the same cosmic jitter for the
 Hipparcos data as Hipparcos does.
 
 Fits to run:
-1. "standard" fit-- all data, no jitter or error inflation. 1a. with planet, 1b. no planet
-2. "Hipparcos only" fit -- no jitter or error inflation. 2a. with planet, 2b. no planet
+1. "standard" fit-- all data, no jitter or error inflation. 1a. with planet (running), 1b. no planet (running)
+2. "Hipparcos only" fit -- no jitter or error inflation. 2a. with planet, 2b. no planet (DONE))
 3. "radio only" -- no jitter or error inflation: no planet, use for 4
 4. "Hipparcos only, radio PM" fit -- no jitter or error inflation. 4a. with planet, 4b. no planet. PM constrained by radio fit.
 
@@ -20,7 +20,7 @@ Fits to show for comparison:
 TODO: formalize non-inclusion of hipparcos data
 """
 
-fit_planet = False  # if True, fit for planet parameters
+fit_planet = True  # if True, fit for planet parameters
 radio_jit = (
     0  # 2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio positions
 )
@@ -159,7 +159,7 @@ if __name__ == "__main__":
     num_threads = 20
     num_temps = 20
     num_walkers = 1000
-    n_steps_per_walker = 5_000  # 50_000
+    n_steps_per_walker = 50_000  # 50_000
     num_steps = num_walkers * n_steps_per_walker
     burn_steps = 100
     thin = 10
