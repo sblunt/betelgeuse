@@ -159,7 +159,7 @@ if __name__ == "__main__":
     num_threads = 20
     num_temps = 20
     num_walkers = 1000
-    n_steps_per_walker = 50_000  # 50_000
+    n_steps_per_walker = 5_000  # 50_000
     num_steps = num_walkers * n_steps_per_walker
     burn_steps = 100
     thin = 10
