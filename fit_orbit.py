@@ -6,18 +6,32 @@ import numpy as np
 Note: in Harper+ 2017 fit, I believe they assume the same cosmic jitter for the
 Hipparcos data as Hipparcos does.
 
-Fits to run:
-1. "standard" fit-- all data, no jitter or error inflation. 1a. with planet (running), 1b. no planet (running)
-2. "Hipparcos only" fit -- no jitter or error inflation. 2a. with planet, 2b. no planet (DONE))
-3. "radio only" -- no jitter or error inflation: no planet, use for 4
-4. "Hipparcos only, radio PM" fit -- no jitter or error inflation. 4a. with planet, 4b. no planet. PM constrained by radio fit.
+Note: using orbitize! branch: option-to-exclude-hipIAD-from-absastromlike
 
+Fits to run:
+1. "standard" fit-- all data, no jitter or error inflation. 
+a. with planet: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_burn100_total5_000_000.hdf5 TODO: run 5x longer
+b. no planet: planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_burn100_total5000000.hdf5 TODO: run 5x longer
+
+2. "Hipparcos only" fit -- no jitter or error inflation.
+a. with planet: planetTrue_dvdFalse_renormHIPFalse_fitradioFalse_burn100_total5000000.hdf5 TODO: run 5x longer
+b. no planet: planetFalse_dvdFalse_renormHIPFalse_fitradioFalse_burn100_total5000000.hdf5 TODO: run 5x longer
+
+3. "radio only" -- no jitter or error inflation: no planet, use for 4
+a. planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosFalse_burn100_total5000000.hdf5 TODO: think through why PM is so broad
+
+4. "Hipparcos only, radio PM" fit -- no jitter or error inflation. PM constrained by radio fit.
+a. with planet: TODO: run later 
+b. no planet: TODO: run later 
+
+5. "no bad Hipparcos" -- remove first two Hipparcos points
+a. with planet: RUNNING: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_nofirstIAD_burn100_total25000000
+b. no planet: RUNNING: planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_nofirstIAD_burn100_total25000000
 
 Fits to show for comparison:
-1. Hipparcos reproduction
-2. Harper+ 17 reproduction
+A. Hipparcos reproduction: plot shown in plots/betelgeuse_IADrefit_dvd.png
+B. Harper+ 17 reproduction: plot shown in plots/radio_refit_2.4mas_planetFalse_dvdFalse_renormHIPTrue_burn100_total500000.png
 
-TODO: formalize non-inclusion of hipparcos data
 """
 
 fit_planet = True  # if True, fit for planet parameters
@@ -26,13 +40,17 @@ radio_jit = (
 )
 hip_dvd = False
 normalizie_hip_errs = False
-fit_radio = False
+fit_radio = True
 error_norm_factor = 0  # 1.2957671  # this is the number Graham scales by for the 2.4mas radio-only fit (private comm) [mas]
+fit_hipparcos = True
+no_bad_hipparcos = True
 
-fit_name = "planet{}_dvd{}_renormHIP{}_fitradio{}".format(
-    fit_planet, hip_dvd, normalizie_hip_errs, fit_radio
+fit_name = "planet{}_dvd{}_renormHIP{}_fitradio{}_fithipparcos{}".format(
+    fit_planet, hip_dvd, normalizie_hip_errs, fit_radio, fit_hipparcos
 )
 
+if no_bad_hipparcos:
+    fit_name += "_nofirstIAD"
 
 input_file = os.path.join("data/data.csv")
 data_table = read_input.read_file(input_file)
@@ -60,6 +78,17 @@ else:
 beetle_Hip = hipparcos.HipparcosLogProb(
     IAD_file, hip_num, num_secondary_bodies, renormalize_errors=normalizie_hip_errs
 )
+
+# remove the first two outlier Hipparcos points
+if no_bad_hipparcos:
+    good_mask = beetle_Hip.epochs > 1990.5
+    beetle_Hip.epochs = beetle_Hip.epochs[good_mask]
+    beetle_Hip.eps = beetle_Hip.eps[good_mask]
+    beetle_Hip.cos_phi = beetle_Hip.cos_phi[good_mask]
+    beetle_Hip.sin_phi = beetle_Hip.sin_phi[good_mask]
+
+if not fit_hipparcos:
+    beetle_Hip.include_hip_iad_in_likelihood = False
 
 # we'll overwrite these in a sec
 m0 = 1e-10  # median mass of primary [M_sol]
@@ -89,6 +118,9 @@ if fit_radio:
 
     # make sure orbitize! correctly figures out which epochs are absolute astrometry
     assert len(beetle_system.stellar_astrom_epochs) == 18
+
+if not fit_hipparcos:
+    assert not beetle_system.hipparcos_IAD.include_hip_iad_in_likelihood
 
 """
 Change priors
@@ -159,10 +191,10 @@ if __name__ == "__main__":
     num_threads = 20
     num_temps = 20
     num_walkers = 1000
-    n_steps_per_walker = 5_000  # 50_000
+    n_steps_per_walker = 25_000
     num_steps = num_walkers * n_steps_per_walker
     burn_steps = 100
-    thin = 10
+    thin = 100
 
     beetle_sampler = sampler.MCMC(
         beetle_system,

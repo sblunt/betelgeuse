@@ -1188,9 +1188,8 @@ if __name__ == "__main__":
 
     matplotlib.rc("font", **font)
 
-    # load results
-    run_name = "planetTrue_dvdFalse_renormHIPFalse_burn100_total1000000_OLD"
-    # run_name = "planetTrue_dvdFalse_renormHIPFalse_burn100_total50000000"
+    no_bad_hipparcos = True
+    run_name = "planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total5000000"
     beetle_results = results.Results()
     beetle_results.load_results("results/{}.hdf5".format(run_name))
 
@@ -1203,11 +1202,15 @@ if __name__ == "__main__":
 
     # aliases for Hipparcos IAD data
     hip_epochs = beetle_results.system.hipparcos_IAD.epochs_mjd
-    hip_ra_absc = beetle_results.system.hipparcos_IAD.alpha_abs_st
-    hip_dec_absc = beetle_results.system.hipparcos_IAD.delta_abs
-    cosphi = beetle_results.system.hipparcos_IAD.cos_phi
-    sinphi = beetle_results.system.hipparcos_IAD.sin_phi
-    epsilon = beetle_results.system.hipparcos_IAD.eps
+    if no_bad_hipparcos:
+        good_mask = Time(hip_epochs, format='mjd').decimalyear > 1990.5
+
+    hip_epochs = hip_epochs[good_mask]
+    hip_ra_absc = beetle_results.system.hipparcos_IAD.alpha_abs_st[good_mask]
+    hip_dec_absc = beetle_results.system.hipparcos_IAD.delta_abs[good_mask]
+    cosphi = beetle_results.system.hipparcos_IAD.cos_phi[good_mask]
+    sinphi = beetle_results.system.hipparcos_IAD.sin_phi[good_mask]
+    epsilon = beetle_results.system.hipparcos_IAD.eps[good_mask]
 
     # pick some random orbits from the posterior to plot
     num2plot = 50
@@ -1215,7 +1218,7 @@ if __name__ == "__main__":
     post = beetle_results.post[plot_indices].T
 
     # pick time at which to plot models
-    epochs2plot = np.linspace(44000, 58000, int(5e3))
+    epochs2plot = np.linspace(44000, 58000, int(1e3))
 
     # make plot vs time
     fig, ax = plt.subplots(3, 2, figsize=(30, 10), dpi=250, sharex=True)
@@ -1284,7 +1287,7 @@ if __name__ == "__main__":
     zoomout = True
 
     if zoomout:
-        plt.savefig("dreamplot.png", dpi=250)
+        plt.savefig("plots/{}/dreamplot.png".format(run_name), dpi=250)
     else:
 
         for a in ax.flatten():
@@ -1295,7 +1298,7 @@ if __name__ == "__main__":
             a.set_ylim(-10, 10)
         for a in ax[2]:
             a.set_ylim(-5, 5)
-        plt.savefig("dreamplot_zoomin.png", dpi=250)
+        plt.savefig("plots/{}/dreamplot_zoomin.png".format(run_name), dpi=250)
 
     # make plot RA vs decl.
     fig, ax = plt.subplots(3, 1, figsize=(10, 30), dpi=250)
@@ -1362,10 +1365,10 @@ if __name__ == "__main__":
         a.set_aspect("equal", "box")
 
     if zoomout:
-        plt.savefig("dreamplot_radec.png", dpi=250)
+        plt.savefig("plots/{}/dreamplot_radec.png".format(run_name), dpi=250)
     else:
         ax[1].set_xlim(-7, 7)
         ax[1].set_ylim(-7, 7)
         ax[2].set_xlim(-4, 4)
         ax[2].set_ylim(-4, 4)
-        plt.savefig("dreamplot_radec_zoomin.png", dpi=250)
+        plt.savefig("plots/{}/dreamplot_radec_zoomin.png".format(run_name), dpi=250)
