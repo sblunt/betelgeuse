@@ -1189,7 +1189,7 @@ if __name__ == "__main__":
     matplotlib.rc("font", **font)
 
     no_bad_hipparcos = True
-    run_name = "planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total5000000"
+    run_name = "planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_nofirstIAD_burn100_total25000000"
     beetle_results = results.Results()
     beetle_results.load_results("results/{}.hdf5".format(run_name))
 
@@ -1203,7 +1203,7 @@ if __name__ == "__main__":
     # aliases for Hipparcos IAD data
     hip_epochs = beetle_results.system.hipparcos_IAD.epochs_mjd
     if no_bad_hipparcos:
-        good_mask = Time(hip_epochs, format='mjd').decimalyear > 1990.5
+        good_mask = Time(hip_epochs, format="mjd").decimalyear > 1990.5
 
     hip_epochs = hip_epochs[good_mask]
     hip_ra_absc = beetle_results.system.hipparcos_IAD.alpha_abs_st[good_mask]
@@ -1284,7 +1284,7 @@ if __name__ == "__main__":
     ax[1, 0].set_ylabel("$\\Delta$R.A. $\\cos{\\delta_0}$ [mas]")
     ax[1, 1].set_ylabel("$\\Delta$decl. [mas]")
 
-    zoomout = True
+    zoomout = False
 
     if zoomout:
         plt.savefig("plots/{}/dreamplot.png".format(run_name), dpi=250)
