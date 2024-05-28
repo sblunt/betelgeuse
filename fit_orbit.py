@@ -10,15 +10,15 @@ Note: using orbitize! branch: option-to-exclude-hipIAD-from-absastromlike
 
 Fits to run:
 1. "standard" fit-- all data, no jitter or error inflation. 
-a. with planet: RUNNING: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000.hdf5
-b. no planet: RUNNING: planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000.hdf5
+a. with planet: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000.hdf5
+b. no planet: planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000.hdf5
 
 2. "Hipparcos only" fit -- no jitter or error inflation.
 a. with planet: (not run) TODO: run
 b. no planet: (not run yet) TODO: run
 
 3. "radio only" -- no jitter or error inflation: no planet, use for 4
-RUNNING: planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosFalse_burn100_total25000000.hdf5
+planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosFalse_burn100_total25000000.hdf5
 
 4. "Hipparcos only, radio PM" fit -- no jitter or error inflation. PM constrained by radio fit.
 a. with planet: TODO: run 
@@ -34,7 +34,7 @@ B. Harper+ 17 reproduction: plot shown in plots/radio_refit_2.4mas_planetFalse_d
 
 """
 
-fit_planet = False  # if True, fit for planet parameters
+fit_planet = True  # if True, fit for planet parameters
 radio_jit = (
     0  # 2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio positions
 )
@@ -153,6 +153,9 @@ if fit_planet:
 
     # set log-uniform secondary mass prior
     beetle_system.sys_priors[m1_index] = priors.LogUniformPrior(0.1, 10)  # [Msun]
+    import pdb
+
+    pdb.set_trace()
 
     # set period prior
     beetle_system.sys_priors[p1_index] = priors.UniformPrior(

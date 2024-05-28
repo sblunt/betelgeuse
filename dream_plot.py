@@ -709,6 +709,7 @@ def plot_middle_panel_radec(
     """
     ra_plx, dec_plx = compute_plx_prediction(post, epochs2plot_mjd, system)
     ra_orbit, dec_orbit = compute_orbit_prediction(post, epochs2plot_mjd, system)
+
     ra_plx_orbit = ra_plx + ra_orbit
     dec_plx_orbit = dec_plx + dec_orbit
 
@@ -1189,9 +1190,19 @@ if __name__ == "__main__":
     matplotlib.rc("font", **font)
 
     no_bad_hipparcos = False
+    zoomout = True
+    no_hip = False
 
     # 1A
-    run_name = "planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000"
+    # run_name = "planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000"
+
+    # 1B
+    # run_name = "planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000"
+
+    # 3
+    # no_hip = True
+    # run_name = "planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosFalse_burn100_total25000000"
+
     beetle_results = results.Results()
     beetle_results.load_results("results/{}.hdf5".format(run_name))
 
@@ -1208,6 +1219,8 @@ if __name__ == "__main__":
         good_mask = Time(hip_epochs, format="mjd").decimalyear > 1990.5
     else:
         good_mask = Time(hip_epochs, format="mjd").decimalyear > 0
+    if no_hip:
+        good_mask = []
 
     hip_epochs = hip_epochs[good_mask]
     hip_ra_absc = beetle_results.system.hipparcos_IAD.alpha_abs_st[good_mask]
@@ -1287,8 +1300,6 @@ if __name__ == "__main__":
     ax[-1, 1].set_xlabel("Time [yr]")
     ax[1, 0].set_ylabel("$\\Delta$R.A. $\\cos{\\delta_0}$ [mas]")
     ax[1, 1].set_ylabel("$\\Delta$decl. [mas]")
-
-    zoomout = True
 
     if zoomout:
         plt.savefig("plots/{}/dreamplot.png".format(run_name), dpi=250)
