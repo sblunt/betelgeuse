@@ -14,19 +14,19 @@ a. with planet: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue
 b. no planet: planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000.hdf5
 
 2. "Hipparcos only" fit -- no jitter or error inflation.
-a. with planet: (not run) TODO: run
-b. no planet: (not run yet) TODO: run
+a. with planet: (not run) RUNNING: planetTrue_dvdFalse_renormHIPFalse_fitradioFalse_fithipparcosTrue_burn100_total25000000.hdf5
+b. no planet: (not run yet) RUNNING: planetFalse_dvdFalse_renormHIPFalse_fitradioFalse_fithipparcosTrue_burn100_total25000000.hdf5
 
 3. "radio only" -- no jitter or error inflation: no planet, use for 4
 planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosFalse_burn100_total25000000.hdf5
 
 4. "Hipparcos only, radio PM" fit -- no jitter or error inflation. PM constrained by radio fit.
-a. with planet: TODO: run 
-b. no planet: TODO: run 
+a. with planet
+b. no planet
 
 5. "no bad Hipparcos" -- remove first two Hipparcos points
-a. with planet: TODO: rerun
-b. no planet: TODO: rerun
+a. with planet: RUNNING: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_nofirstIAD
+b. no planet: RUNNING: planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_nofirstIAD
 
 Fits to show for comparison:
 A. Hipparcos reproduction: plot shown in plots/betelgeuse_IADrefit_dvd.png
@@ -34,7 +34,7 @@ B. Harper+ 17 reproduction: plot shown in plots/radio_refit_2.4mas_planetFalse_d
 
 """
 
-fit_planet = True  # if True, fit for planet parameters
+fit_planet = False  # if True, fit for planet parameters
 radio_jit = (
     0  # 2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio positions
 )
@@ -42,16 +42,17 @@ hip_dvd = False
 normalizie_hip_errs = False
 fit_radio = True
 error_norm_factor = 1  # 1.2957671  # this is the number Graham scales by for the 2.4mas radio-only fit (private comm) [mas]
-fit_hipparcos = False
-no_bad_hipparcos = False
+fit_hipparcos = True
+no_bad_hipparcos = True
 
 fit_name = "planet{}_dvd{}_renormHIP{}_fitradio{}_fithipparcos{}".format(
     fit_planet, hip_dvd, normalizie_hip_errs, fit_radio, fit_hipparcos
 )
 
-print("RUNNING FIT: {}\n\n".format(fit_name))
 if no_bad_hipparcos:
     fit_name += "_nofirstIAD"
+
+print("RUNNING FIT: {}\n\n".format(fit_name))
 
 input_file = os.path.join("data/data.csv")
 data_table = read_input.read_file(input_file)
@@ -153,9 +154,6 @@ if fit_planet:
 
     # set log-uniform secondary mass prior
     beetle_system.sys_priors[m1_index] = priors.LogUniformPrior(0.1, 10)  # [Msun]
-    import pdb
-
-    pdb.set_trace()
 
     # set period prior
     beetle_system.sys_priors[p1_index] = priors.UniformPrior(
