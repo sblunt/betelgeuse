@@ -1190,11 +1190,12 @@ if __name__ == "__main__":
     matplotlib.rc("font", **font)
 
     no_bad_hipparcos = False
-    zoomout = True
+    zoomout = False
     no_hip = False
+    restrict_period = True
 
     # 1A
-    # run_name = "planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000"
+    run_name = "planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000"
 
     # 1B
     # run_name = "planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000"
@@ -1231,8 +1232,13 @@ if __name__ == "__main__":
 
     # pick some random orbits from the posterior to plot
     num2plot = 50
-    plot_indices = np.random.randint(0, len(beetle_results.post), size=num2plot)
-    post = beetle_results.post[plot_indices].T
+    if restrict_period:
+        good_post = beetle_results.post[beetle_results.post[:, 0] > 5]
+        plot_indices = np.random.randint(0, len(good_post), size=num2plot)
+        post = good_post[plot_indices].T
+    else:
+        plot_indices = np.random.randint(0, len(beetle_results.post), size=num2plot)
+        post = beetle_results.post[plot_indices].T
 
     # pick time at which to plot models
     epochs2plot = np.linspace(44000, 58000, int(1e3))
@@ -1302,7 +1308,12 @@ if __name__ == "__main__":
     ax[1, 1].set_ylabel("$\\Delta$decl. [mas]")
 
     if zoomout:
-        plt.savefig("plots/{}/dreamplot.png".format(run_name), dpi=250)
+        if restrict_period:
+            plt.savefig(
+                "plots/{}/dreamplot_restrictPeriod.png".format(run_name), dpi=250
+            )
+        else:
+            plt.savefig("plots/{}/dreamplot.png".format(run_name), dpi=250)
     else:
 
         for a in ax.flatten():
@@ -1313,7 +1324,12 @@ if __name__ == "__main__":
             a.set_ylim(-10, 10)
         for a in ax[2]:
             a.set_ylim(-5, 5)
-        plt.savefig("plots/{}/dreamplot_zoomin.png".format(run_name), dpi=250)
+        if restrict_period:
+            plt.savefig(
+                "plots/{}/dreamplot_zoomin_restrictPeriod.png".format(run_name), dpi=250
+            )
+        else:
+            plt.savefig("plots/{}/dreamplot_zoomin.png".format(run_name), dpi=250)
 
     # make plot RA vs decl.
     fig, ax = plt.subplots(3, 1, figsize=(10, 30), dpi=250)
@@ -1380,10 +1396,21 @@ if __name__ == "__main__":
         a.set_aspect("equal", "box")
 
     if zoomout:
-        plt.savefig("plots/{}/dreamplot_radec.png".format(run_name), dpi=250)
+        if restrict_period:
+            plt.savefig(
+                "plots/{}/dreamplot_radec_restrictPeriod.png".format(run_name), dpi=250
+            )
+        else:
+            plt.savefig("plots/{}/dreamplot_radec.png".format(run_name), dpi=250)
     else:
         ax[1].set_xlim(-7, 7)
         ax[1].set_ylim(-7, 7)
         ax[2].set_xlim(-4, 4)
         ax[2].set_ylim(-4, 4)
-        plt.savefig("plots/{}/dreamplot_radec_zoomin.png".format(run_name), dpi=250)
+        if restrict_period:
+            plt.savefig(
+                "plots/{}/dreamplot_radec_zoomin_restrictPeriod.png".format(run_name),
+                dpi=250,
+            )
+        else:
+            plt.savefig("plots/{}/dreamplot_radec_zoomin.png".format(run_name), dpi=250)
