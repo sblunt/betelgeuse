@@ -14,19 +14,20 @@ a. with planet: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue
 b. no planet: planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000.hdf5
 
 2. "Hipparcos only" fit -- no jitter or error inflation.
-a. with planet: (not run) RUNNING: planetTrue_dvdFalse_renormHIPFalse_fitradioFalse_fithipparcosTrue_burn100_total25000000.hdf5
-b. no planet: (not run yet) RUNNING: planetFalse_dvdFalse_renormHIPFalse_fitradioFalse_fithipparcosTrue_burn100_total25000000.hdf5
+a. with planet: RUNNING: planetTrue_dvdFalse_renormHIPFalse_fitradioFalse_fithipparcosTrue_burn100_total25000000.hdf5
+b. no planet: RUNNING: planetFalse_dvdFalse_renormHIPFalse_fitradioFalse_fithipparcosTrue_burn100_total25000000.hdf5
 
-3. "radio only" -- no jitter or error inflation: no planet, use for 4
-planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosFalse_burn100_total25000000.hdf5
+3. "radio only" -- no jitter or error inflation: use for 4
+a. with planet: RUNNING: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosFalse_burn100_total25000000.hdf5
+b. no planet: planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosFalse_burn100_total25000000.hdf5
 
 4. "Hipparcos only, radio PM" fit -- no jitter or error inflation. PM constrained by radio fit.
-a. with planet
-b. no planet
+a. with planet:
+b. no planet:
 
 5. "no bad Hipparcos" -- remove first two Hipparcos points
-a. with planet: RUNNING: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_nofirstIAD
-b. no planet: RUNNING: planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_nofirstIAD
+a. with planet: RUNNING: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_nofirstIAD_burn100_total25000000.hdf5
+b. no planet: RUNNING: planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_nofirstIAD_burn100_total25000000.hdf5
 
 Fits to show for comparison:
 A. Hipparcos reproduction: plot shown in plots/betelgeuse_IADrefit_dvd.png
@@ -34,7 +35,7 @@ B. Harper+ 17 reproduction: plot shown in plots/radio_refit_2.4mas_planetFalse_d
 
 """
 
-fit_planet = False  # if True, fit for planet parameters
+fit_planet = True  # if True, fit for planet parameters
 radio_jit = (
     0  # 2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio positions
 )
@@ -42,8 +43,8 @@ hip_dvd = False
 normalizie_hip_errs = False
 fit_radio = True
 error_norm_factor = 1  # 1.2957671  # this is the number Graham scales by for the 2.4mas radio-only fit (private comm) [mas]
-fit_hipparcos = True
-no_bad_hipparcos = True
+fit_hipparcos = False
+no_bad_hipparcos = False
 
 fit_name = "planet{}_dvd{}_renormHIP{}_fitradio{}_fithipparcos{}".format(
     fit_planet, hip_dvd, normalizie_hip_errs, fit_radio, fit_hipparcos
