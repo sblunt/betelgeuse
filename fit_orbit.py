@@ -14,11 +14,11 @@ a. with planet: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue
 b. no planet: planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000.hdf5
 
 2. "Hipparcos only" fit -- no jitter or error inflation.
-a. with planet: RUNNING: planetTrue_dvdFalse_renormHIPFalse_fitradioFalse_fithipparcosTrue_burn100_total25000000.hdf5
-b. no planet: RUNNING: planetFalse_dvdFalse_renormHIPFalse_fitradioFalse_fithipparcosTrue_burn100_total25000000.hdf5
+a. with planet: planetTrue_dvdFalse_renormHIPFalse_fitradioFalse_fithipparcosTrue_burn100_total25000000.hdf5
+b. no planet: planetFalse_dvdFalse_renormHIPFalse_fitradioFalse_fithipparcosTrue_burn100_total25000000.hdf5
 
 3. "radio only" -- no jitter or error inflation: use for 4
-a. with planet: RUNNING: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosFalse_burn100_total25000000.hdf5
+a. with planet: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosFalse_burn100_total25000000.hdf5
 b. no planet: planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosFalse_burn100_total25000000.hdf5
 
 4. "Hipparcos only, radio PM" fit -- no jitter or error inflation. PM constrained by radio fit.
@@ -26,8 +26,8 @@ a. with planet:
 b. no planet:
 
 5. "no bad Hipparcos" -- remove first two Hipparcos points
-a. with planet: RUNNING: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_nofirstIAD_burn100_total25000000.hdf5
-b. no planet: RUNNING: planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_nofirstIAD_burn100_total25000000.hdf5
+a. with planet: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_nofirstIAD_burn100_total25000000.hdf5
+b. no planet: planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_nofirstIAD_burn100_total25000000.hdf5
 
 Fits to show for comparison:
 A. Hipparcos reproduction: plot shown in plots/betelgeuse_IADrefit_dvd.png

@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import cm
+
 from orbitize import results
 from astropy.time import Time
 
@@ -867,17 +869,24 @@ def plot_bottom_panel(
     """
     ra_orbit, dec_orbit = compute_orbit_prediction(post, epochs2plot_mjd, system)
 
+    orb_period_min = 4
+    orb_period_range = 7 - 4
+
     for i in range(ra_orbit.shape[1]):
+
+        orb_per_i = post[param_idx["per1"], i]  # [yr]
+        orb_per_fraction = (orb_per_i - orb_period_min) / orb_period_range
+
         ax[0].plot(
             Time(epochs2plot_mjd, format="mjd").decimalyear,
             ra_orbit[:, i],
-            color="grey",
+            color=cm.rainbow(orb_per_fraction),
             alpha=0.2,
         )
         ax[1].plot(
             Time(epochs2plot_mjd, format="mjd").decimalyear,
             dec_orbit[:, i],
-            color="grey",
+            color=cm.rainbow(orb_per_fraction),
             alpha=0.2,
         )
 
@@ -1189,20 +1198,21 @@ if __name__ == "__main__":
 
     matplotlib.rc("font", **font)
 
-    no_bad_hipparcos = False
     zoomout = False
+
+    no_bad_hipparcos = False
     no_hip = False
-    restrict_period = True
+    restrict_period = False
 
     # 1A
-    run_name = "planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000"
+    # run_name = "planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000"
 
     # 1B
     # run_name = "planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000"
 
     # 3
-    # no_hip = True
-    # run_name = "planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosFalse_burn100_total25000000"
+    no_hip = True
+    run_name = "planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosFalse_burn100_total25000000"
 
     beetle_results = results.Results()
     beetle_results.load_results("results/{}.hdf5".format(run_name))
