@@ -6,12 +6,15 @@ import numpy as np
 Note: in Harper+ 2017 fit, I believe they assume the same cosmic jitter for the
 Hipparcos data as Hipparcos does.
 
-Note: using orbitize! branch: option-to-exclude-hipIAD-from-absastromlike
+Running fits in conda environment `betelgeuse` which uses a branch of orbitize 
+called `orbitize_for_betelgeuse`
 
 Fits to run:
 1. "standard" fit-- all data, no jitter or error inflation. 
 a. with planet: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000.hdf5
 b. no planet: planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000.hdf5
+c. same as a, but with eccentricity free: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_eccfree_burn100_total25000000.hdf5
+d. same as a, but with astrometric jitter free: RUNNING (planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_fitastromjitter)
 
 2. "Hipparcos only" fit -- no jitter or error inflation.
 a. with planet: planetTrue_dvdFalse_renormHIPFalse_fitradioFalse_fithipparcosTrue_burn100_total25000000.hdf5
@@ -22,8 +25,8 @@ a. with planet: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosFals
 b. no planet: planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosFalse_burn100_total25000000.hdf5
 
 4. "Hipparcos only, radio PM" fit -- no jitter or error inflation. PM constrained by radio fit.
-a. with planet:
-b. no planet:
+a. with planet: (not run)
+b. no planet: (not run)
 
 5. "no bad Hipparcos" -- remove first two Hipparcos points
 a. with planet: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_nofirstIAD_burn100_total25000000.hdf5
@@ -43,12 +46,19 @@ hip_dvd = False
 normalizie_hip_errs = False
 fit_radio = True
 error_norm_factor = 1  # 1.2957671  # this is the number Graham scales by for the 2.4mas radio-only fit (private comm) [mas]
-fit_hipparcos = False
+fit_hipparcos = True
 no_bad_hipparcos = False
+ecc_free = False
+fit_astrometric_jitter = True
 
 fit_name = "planet{}_dvd{}_renormHIP{}_fitradio{}_fithipparcos{}".format(
     fit_planet, hip_dvd, normalizie_hip_errs, fit_radio, fit_hipparcos
 )
+
+if ecc_free:
+    fit_name += "_eccfree"
+if fit_astrometric_jitter:
+    fit_name += "_fitastromjitter"
 
 if no_bad_hipparcos:
     fit_name += "_nofirstIAD"
@@ -115,6 +125,7 @@ beetle_system = system.System(
     plx_err=plx_err,
     fitting_basis="Period",
     restrict_angle_ranges=True,
+    astrometric_jitter=fit_astrometric_jitter,
 )
 
 if fit_radio:
@@ -133,7 +144,7 @@ Change priors
 
 # set uniform parallax prior
 plx_index = beetle_system.param_idx["plx"]
-beetle_system.sys_priors[plx_index] = priors.UniformPrior(-10, 15)
+beetle_system.sys_priors[plx_index] = priors.UniformPrior(0, 15)
 
 m0_index = beetle_system.param_idx["m0"]
 m1_index = beetle_system.param_idx["m1"]
@@ -161,9 +172,10 @@ if fit_planet:
         1000 / 365.25, 2700 / 365.25
     )  # [yr]
 
-    # fix e=0 and aop (undefined for circular orbit)
-    beetle_system.sys_priors[e1_index] = 0
-    beetle_system.sys_priors[aop1_index] = 0
+    if not ecc_free:
+        # fix e=0 and aop (undefined for circular orbit)
+        beetle_system.sys_priors[e1_index] = 0
+        beetle_system.sys_priors[aop1_index] = 0
 
 
 else:
@@ -192,7 +204,7 @@ Run MCMC
 """
 
 if __name__ == "__main__":
-    num_threads = 10
+    num_threads = 50
     num_temps = 20
     num_walkers = 1000
     n_steps_per_walker = 25_000
