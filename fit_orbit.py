@@ -14,7 +14,7 @@ Fits to run:
 a. with planet: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000.hdf5
 b. no planet: planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000.hdf5
 c. same as a, but with eccentricity free: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_eccfree_burn100_total25000000.hdf5
-d. same as a, but with astrometric jitter free: RUNNING (planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_fitastromjitter)
+d. same as a, but with astrometric jitter free: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_fitastromjitter_burn100_total25000000.hdf5
 
 2. "Hipparcos only" fit -- no jitter or error inflation.
 a. with planet: planetTrue_dvdFalse_renormHIPFalse_fitradioFalse_fithipparcosTrue_burn100_total25000000.hdf5
