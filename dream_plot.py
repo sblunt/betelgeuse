@@ -632,7 +632,7 @@ if __name__ == "__main__":
 
     matplotlib.rc("font", **font)
 
-    zoomout = True
+    zoomout = False
 
     no_bad_hipparcos = False
     no_hip = False

@@ -108,6 +108,9 @@ df_orbitize["raoff_err"] = df["raoff_err"].astype(float)
 # save
 df_orbitize.to_csv("data.csv", index=False)
 
+# make a latex table for the paper
+print(df_orbitize)
+
 # make a quick plot of the positions (compare to Fig 1 of Harper+ 2017)
 plt.figure()
 plt.errorbar(
