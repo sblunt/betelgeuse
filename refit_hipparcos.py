@@ -1,11 +1,17 @@
 from datetime import datetime
-
+import matplotlib.pyplot as plt
 from orbitize.hipparcos import nielsen_iad_refitting_test
 
 """
 
 TODO: see footnote 8 of van Leeuwen+ 2017 & Update documentation here.
 """
+
+plt.rcParams["font.family"] = "stixgeneral"
+plt.rcParams["mathtext.fontset"] = "stix"
+plt.rcParams["font.size"] = 11
+plt.rcParams["figure.facecolor"] = "white"
+
 
 use_dvd = True
 if use_dvd:
@@ -16,7 +22,7 @@ else:
 hip_num = "027989"  # Betelgeuse
 
 # Name/path for the plot this function will make
-saveplot = "plots/betelgeuse_IADrefit{}.png".format(saveplot_append)
+saveplot = "plots/betelgeuse_IADrefit{}.pdf".format(saveplot_append)
 
 # Location of the Hipparcos IAD file.
 if use_dvd:

@@ -38,18 +38,16 @@ B. Harper+ 17 reproduction: plot shown in plots/radio_refit_2.4mas_planetFalse_d
 
 """
 
-fit_planet = True  # if True, fit for planet parameters
-radio_jit = (
-    0  # 2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio positions
-)
+fit_planet = False  # if True, fit for planet parameters
+radio_jit = 2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio positions
 hip_dvd = False
 normalizie_hip_errs = False
 fit_radio = True
-error_norm_factor = 1  # 1.2957671  # this is the number Graham scales by for the 2.4mas radio-only fit (private comm) [mas]
-fit_hipparcos = True
+error_norm_factor = 1.2957671  # this is the number Graham scales by for the 2.4mas radio-only fit (private comm) [mas]
+fit_hipparcos = False
 no_bad_hipparcos = False
 ecc_free = False
-fit_astrometric_jitter = True
+fit_astrometric_jitter = False
 
 fit_name = "planet{}_dvd{}_renormHIP{}_fitradio{}_fithipparcos{}".format(
     fit_planet, hip_dvd, normalizie_hip_errs, fit_radio, fit_hipparcos

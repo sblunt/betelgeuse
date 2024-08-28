@@ -6,6 +6,11 @@ from matplotlib.pyplot import cm
 from orbitize import results
 from astropy.time import Time
 
+plt.rcParams["font.family"] = "stixgeneral"
+plt.rcParams["mathtext.fontset"] = "stix"
+plt.rcParams["font.size"] = 11
+plt.rcParams["figure.facecolor"] = "white"
+
 
 def compute_iad_tangent_points(
     ra_st_predictions,
@@ -498,13 +503,13 @@ def plot_bottom_panel(
         ax[0].plot(
             Time(epochs2plot_mjd, format="mjd").decimalyear,
             ra_orbit[:, i],
-            color=cm.rainbow(orb_per_fraction),
+            color=cm.RdBu_r(orb_per_fraction),
             alpha=0.2,
         )
         ax[1].plot(
             Time(epochs2plot_mjd, format="mjd").decimalyear,
             dec_orbit[:, i],
-            color=cm.rainbow(orb_per_fraction),
+            color=cm.RdBu_r(orb_per_fraction),
             alpha=0.2,
         )
 
@@ -685,7 +690,7 @@ if __name__ == "__main__":
         post = beetle_results.post[plot_indices].T
 
     # pick time at which to plot models
-    epochs2plot = np.linspace(44000, 58000, int(1e3))
+    epochs2plot = np.linspace(44000, 61000, int(1e3))
 
     # make plot vs time
     fig, ax = plt.subplots(3, 2, figsize=(30, 10), dpi=250, sharex=True)
@@ -754,10 +759,10 @@ if __name__ == "__main__":
     if zoomout:
         if restrict_period:
             plt.savefig(
-                "plots/{}/dreamplot_restrictPeriod.png".format(run_name), dpi=250
+                "plots/{}/dreamplot_restrictPeriod.pdf".format(run_name), dpi=250
             )
         else:
-            plt.savefig("plots/{}/dreamplot.png".format(run_name), dpi=250)
+            plt.savefig("plots/{}/dreamplot.pdf".format(run_name), dpi=250)
     else:
 
         for a in ax.flatten():
@@ -765,12 +770,14 @@ if __name__ == "__main__":
         for a in ax[0]:
             a.set_ylim(-100, 100)
         for a in ax[1]:
+            a.set_yticks([-5, 0, 5])
             a.set_ylim(-10, 10)
         for a in ax[2]:
             a.set_ylim(-5, 5)
+            a.set_yticks([-2.5, 0, 2.5])
         if restrict_period:
             plt.savefig(
-                "plots/{}/dreamplot_zoomin_restrictPeriod.png".format(run_name), dpi=250
+                "plots/{}/dreamplot_zoomin_restrictPeriod.pdf".format(run_name), dpi=250
             )
         else:
-            plt.savefig("plots/{}/dreamplot_zoomin.png".format(run_name), dpi=250)
+            plt.savefig("plots/{}/dreamplot_zoomin.pdf".format(run_name), dpi=250)
