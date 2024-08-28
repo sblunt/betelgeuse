@@ -1,5 +1,4 @@
-# Don't version track large results files
-*.hdf5
+# Don't version track old results files
 results/OLD/*
 
 # Byte-compiled / optimized / DLL files
