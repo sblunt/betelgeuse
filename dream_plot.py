@@ -644,7 +644,7 @@ if __name__ == "__main__":
     restrict_period = False
 
     # 1A
-    run_name = "planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000"
+    run_name = "planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn10_total10000"
 
     # 1B
     # run_name = "planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000"
@@ -686,6 +686,7 @@ if __name__ == "__main__":
         plot_indices = np.random.randint(0, len(good_post), size=num2plot)
         post = good_post[plot_indices].T
     else:
+        print(beetle_results.post)
         plot_indices = np.random.randint(0, len(beetle_results.post), size=num2plot)
         post = beetle_results.post[plot_indices].T
 

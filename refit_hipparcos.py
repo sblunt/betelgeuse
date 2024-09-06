@@ -13,7 +13,7 @@ plt.rcParams["font.size"] = 11
 plt.rcParams["figure.facecolor"] = "white"
 
 
-use_dvd = True
+use_dvd = False
 if use_dvd:
     saveplot_append = "_dvd"
 else:

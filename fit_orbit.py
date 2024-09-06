@@ -6,8 +6,7 @@ import numpy as np
 Note: in Harper+ 2017 fit, I believe they assume the same cosmic jitter for the
 Hipparcos data as Hipparcos does.
 
-Running fits in conda environment `betelgeuse` which uses a branch of orbitize 
-called `orbitize_for_betelgeuse`
+Running fits using a branch of orbitize called `orbitize_for_morgan`
 
 Fits to run:
 1. "standard" fit-- all data, no jitter or error inflation. 
@@ -39,12 +38,12 @@ B. Harper+ 17 reproduction: plot shown in plots/radio_refit_2.4mas_planetFalse_d
 """
 
 fit_planet = False  # if True, fit for planet parameters
-radio_jit = 2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio positions
+radio_jit = 0 # 2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio positions
 hip_dvd = False
 normalizie_hip_errs = False
-fit_radio = True
-error_norm_factor = 1.2957671  # this is the number Graham scales by for the 2.4mas radio-only fit (private comm) [mas]
-fit_hipparcos = False
+fit_radio = False
+error_norm_factor = 1 # 1.2957671  # this is the number Graham scales by for the 2.4mas radio-only fit (private comm) [mas]
+fit_hipparcos = True
 no_bad_hipparcos = False
 ecc_free = False
 fit_astrometric_jitter = False
@@ -202,7 +201,7 @@ Run MCMC
 """
 
 if __name__ == "__main__":
-    num_threads = 50
+    num_threads = 20
     num_temps = 20
     num_walkers = 1000
     n_steps_per_walker = 25_000
