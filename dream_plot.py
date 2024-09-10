@@ -637,14 +637,14 @@ if __name__ == "__main__":
 
     matplotlib.rc("font", **font)
 
-    zoomout = False
+    zoomout = True
 
     no_bad_hipparcos = False
     no_hip = False
     restrict_period = False
 
     # 1A
-    run_name = "planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn10_total10000"
+    run_name = "planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000"
 
     # 1B
     # run_name = "planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000"

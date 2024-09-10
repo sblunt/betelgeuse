@@ -14,6 +14,8 @@ a. with planet: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue
 b. no planet: planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_burn100_total25000000.hdf5
 c. same as a, but with eccentricity free: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_eccfree_burn100_total25000000.hdf5
 d. same as a, but with astrometric jitter free: planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_fitastromjitter_burn100_total25000000.hdf5
+e. same as d, but with the Brandt+ ad-hoc corrections of sigma=2.25 mas and delta_r = 0.140 mas applied.
+planetTrue_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_fitastromjitter_brandtcorr
 
 2. "Hipparcos only" fit -- no jitter or error inflation.
 a. with planet: planetTrue_dvdFalse_renormHIPFalse_fitradioFalse_fithipparcosTrue_burn100_total25000000.hdf5
@@ -37,16 +39,19 @@ B. Harper+ 17 reproduction: plot shown in plots/radio_refit_2.4mas_planetFalse_d
 
 """
 
-fit_planet = False  # if True, fit for planet parameters
-radio_jit = 0 # 2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio positions
+fit_planet = True  # if True, fit for planet parameters
+radio_jit = (
+    0  # 2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio positions
+)
 hip_dvd = False
+brandt_correction = True
 normalizie_hip_errs = False
-fit_radio = False
-error_norm_factor = 1 # 1.2957671  # this is the number Graham scales by for the 2.4mas radio-only fit (private comm) [mas]
+fit_radio = True
+error_norm_factor = 1  # 1.2957671  # this is the number Graham scales by for the 2.4mas radio-only fit (private comm) [mas]
 fit_hipparcos = True
 no_bad_hipparcos = False
 ecc_free = False
-fit_astrometric_jitter = False
+fit_astrometric_jitter = True
 
 fit_name = "planet{}_dvd{}_renormHIP{}_fitradio{}_fithipparcos{}".format(
     fit_planet, hip_dvd, normalizie_hip_errs, fit_radio, fit_hipparcos
@@ -56,6 +61,8 @@ if ecc_free:
     fit_name += "_eccfree"
 if fit_astrometric_jitter:
     fit_name += "_fitastromjitter"
+if brandt_correction:
+    fit_name += "_brandtcorr"
 
 if no_bad_hipparcos:
     fit_name += "_nofirstIAD"
@@ -76,8 +83,6 @@ if not fit_radio:
     # replace the radio astrometry with an empty data table
     data_table = data_table[:0]
 
-print(data_table)
-
 num_secondary_bodies = 1  # number of planets/companions orbiting your primary
 hip_num = "027989"  # Betelgeuse
 if hip_dvd:
@@ -88,7 +93,11 @@ else:
 # the angular size of Beetle is 55 mas, and the Hipparcos jitter is 0.15 mas, for reference
 
 beetle_Hip = hipparcos.HipparcosLogProb(
-    IAD_file, hip_num, num_secondary_bodies, renormalize_errors=normalizie_hip_errs
+    IAD_file,
+    hip_num,
+    num_secondary_bodies,
+    renormalize_errors=normalizie_hip_errs,
+    brandt_correction=brandt_correction,
 )
 
 # remove the first two outlier Hipparcos points
@@ -201,7 +210,7 @@ Run MCMC
 """
 
 if __name__ == "__main__":
-    num_threads = 20
+    num_threads = 10
     num_temps = 20
     num_walkers = 1000
     n_steps_per_walker = 25_000
