@@ -6,7 +6,7 @@ import numpy as np
 Note: in Harper+ 2017 fit, they assume the same cosmic jitter for the
 Hipparcos data as Hipparcos does.
 
-Running fits using a branch of orbitize called `orbitize_for_morgan`
+Running fits using a fork of orbitize: github.com/sblunt/orbitize_for_betelgeuse
 
 Fits to run:
 1. "standard" fit-- all data, no jitter or error inflation. 
