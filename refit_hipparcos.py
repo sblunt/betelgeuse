@@ -3,8 +3,10 @@ import matplotlib.pyplot as plt
 from orbitize.hipparcos import nielsen_iad_refitting_test
 
 """
-
-TODO: see footnote 8 of van Leeuwen+ 2017 & Update documentation here.
+Reconstruct the raw Hipparcos IAD following Neilsen+ 2020 and Harper+ 2008/2017,
+including removing the cosmic variance term that has been added in quadrature. 
+Then, re-perform the fit (including adding back a fixed cosmic jitter)
+and compare with the Hipparcos team's version.
 """
 
 plt.rcParams["font.family"] = "stixgeneral"

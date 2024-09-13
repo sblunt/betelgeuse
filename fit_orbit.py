@@ -3,7 +3,7 @@ from orbitize import read_input, hipparcos, system, priors, sampler
 import numpy as np
 
 """
-Note: in Harper+ 2017 fit, I believe they assume the same cosmic jitter for the
+Note: in Harper+ 2017 fit, they assume the same cosmic jitter for the
 Hipparcos data as Hipparcos does.
 
 Running fits using a branch of orbitize called `orbitize_for_morgan`
@@ -36,22 +36,24 @@ b. no planet: planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosTrue_
 Fits to show for comparison:
 A. Hipparcos reproduction: plot shown in plots/betelgeuse_IADrefit_dvd.png
 B. Harper+ 17 reproduction: plot shown in plots/radio_refit_2.4mas_planetFalse_dvdFalse_renormHIPTrue_burn100_total500000.png
+fit: planetFalse_dvdFalse_renormHIPFalse_fitradioTrue_fithipparcosFalse_errornorm_burn100_total500000
 
 """
 
-fit_planet = True  # if True, fit for planet parameters
-radio_jit = (
-    0  # 2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio positions
-)
+
+fit_planet = False  # if True, fit for planet parameters
+radio_jit = 2.4  # [mas] Harper+ 17 fit adds in a jitter term to the radio errors
 hip_dvd = False
-brandt_correction = True
+brandt_correction = False
 normalizie_hip_errs = False
 fit_radio = True
-error_norm_factor = 1  # 1.2957671  # this is the number Graham scales by for the 2.4mas radio-only fit (private comm) [mas]
-fit_hipparcos = True
+error_norm_factor = 1.2957671  # this is the number Graham scales by for the 2.4mas radio-only fit (private comm) [mas]
+fit_hipparcos = False
 no_bad_hipparcos = False
 ecc_free = False
-fit_astrometric_jitter = True
+fit_astrometric_jitter = False
+
+beetle_delta0 = 7.40703653
 
 fit_name = "planet{}_dvd{}_renormHIP{}_fitradio{}_fithipparcos{}".format(
     fit_planet, hip_dvd, normalizie_hip_errs, fit_radio, fit_hipparcos
@@ -63,7 +65,8 @@ if fit_astrometric_jitter:
     fit_name += "_fitastromjitter"
 if brandt_correction:
     fit_name += "_brandtcorr"
-
+if error_norm_factor > 1:
+    fit_name += "_errornorm"
 if no_bad_hipparcos:
     fit_name += "_nofirstIAD"
 
@@ -72,9 +75,21 @@ print("RUNNING FIT: {}\n\n".format(fit_name))
 input_file = os.path.join("data/data.csv")
 data_table = read_input.read_file(input_file)
 
-data_table["quant1_err"] = error_norm_factor * np.sqrt(
-    data_table["quant1_err"] ** 2 + radio_jit**2
+# Harper+ 17 scale/add jitter to deltaRAcos(delta0) errors, but we fit in deltaRA.
+# so... convert to deltaRAcos(delta0), then scale/add jitter, then convert back.
+data_table["quant1_err"] = (
+    error_norm_factor
+    * np.sqrt(
+        (data_table["quant1_err"] * np.cos(np.radians(beetle_delta0))) ** 2
+        + radio_jit**2
+    )
+    / np.cos(np.radians(beetle_delta0))
 )
+
+# data_table["quant1_err"] = error_norm_factor * np.sqrt(
+#     data_table["quant1_err"] ** 2 + radio_jit**2
+# )
+
 data_table["quant2_err"] = error_norm_factor * np.sqrt(
     data_table["quant2_err"] ** 2 + radio_jit**2
 )
@@ -90,7 +105,7 @@ if hip_dvd:
 else:
     IAD_file = "data/H{}.d".format(hip_num)
 
-# the angular size of Beetle is 55 mas, and the Hipparcos jitter is 0.15 mas, for reference
+# the angular size of Beetle is 55 mas, and the Hipparcos jitter is 2.5 mas, for reference
 
 beetle_Hip = hipparcos.HipparcosLogProb(
     IAD_file,
@@ -151,6 +166,8 @@ Change priors
 # set uniform parallax prior
 plx_index = beetle_system.param_idx["plx"]
 beetle_system.sys_priors[plx_index] = priors.UniformPrior(0, 15)
+if error_norm_factor > 1:
+    beetle_system.sys_priors[plx_index] = priors.UniformPrior(-10, 15)
 
 m0_index = beetle_system.param_idx["m0"]
 m1_index = beetle_system.param_idx["m1"]
@@ -210,10 +227,10 @@ Run MCMC
 """
 
 if __name__ == "__main__":
-    num_threads = 10
+    num_threads = 50
     num_temps = 20
     num_walkers = 1000
-    n_steps_per_walker = 25_000
+    n_steps_per_walker = 5_000
     num_steps = num_walkers * n_steps_per_walker
     burn_steps = 100
     thin = 100

@@ -1,5 +1,6 @@
 # Don't version track old results files
 results/OLD/*
+plots/OLD
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
